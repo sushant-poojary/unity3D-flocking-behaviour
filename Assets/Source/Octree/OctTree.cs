@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,6 +5,7 @@ public partial class OctTree
 {
     private const int MAX_LEAF_NODES = 8;
     private const int MIN_SPACE_SPAN = 1;
+    private const int MAX_CONTAINER_SIZE = 100;
 
     public int MinSpaceSpan { get; private set; }
     private readonly OctNode mRoot;
@@ -31,12 +31,16 @@ public partial class OctTree
         mRoot.BuildLeafNodes(MinSpaceSpan);
     }
 
-    public Bounds Insert(GameObject transform)
+    public bool Insert(GameObject gameObject, out Bounds bounds)
     {
-        var objBounds = transform.GetComponent<BoxCollider>().bounds;
-
-        var node = mRoot.Insert(objBounds);
-        if (node != null) return node.BoundingBox;
-        else return new Bounds();
+        bounds = new Bounds();
+        Bounds objBounds = gameObject.GetComponent<BoxCollider>().bounds;
+        OctNode containingNode;
+        if (mRoot.Insert(gameObject, objBounds, out containingNode))
+        {
+            bounds = containingNode.BoundingBox;
+            return true;
+        }
+        return false;
     }
 }

@@ -18,7 +18,7 @@ public class SpatialOctree : MonoBehaviour
     void Start()
     {
         allRegionsColor = new List<Color>();
-        mSpaceTree = new OctTree(transform.position, 10, 1);
+        mSpaceTree = new OctTree(transform.position, 10, 2);
         mSpaceBounds = mSpaceTree.GetRootArea();
         mSpaceTree.BuildTree();
         allRegions = mSpaceTree.GetAllRegions();
@@ -51,15 +51,17 @@ public class SpatialOctree : MonoBehaviour
      boundPoint6 = Vector3(boundPoint1.x, boundPoint2.y, boundPoint2.z);
      boundPoint7 = Vector3(boundPoint2.x, boundPoint1.y, boundPoint2.z);
      boundPoint8 = Vector3(boundPoint2.x, boundPoint2.y, boundPoint1.z);*/
-         mContainerBound = mSpaceTree.Insert(Boid.gameObject);
-       
+        if (mSpaceTree.Insert(Boid.gameObject, out mContainerBound))
+        {
+        }
+
     }
 
     private void OnGUI()
     {
         if (GUILayout.Button("test"))
         {
-             mContainerBound = mSpaceTree.Insert(Boid.gameObject);
+            mSpaceTree.Insert(Boid.gameObject, out mContainerBound);
         }
     }
 
@@ -73,7 +75,7 @@ public class SpatialOctree : MonoBehaviour
                 var item = allRegions[i];
 
                 Gizmos.color = allRegionsColor[i];
-                Gizmos.DrawSphere(item.center, 0.1f);
+                Gizmos.DrawSphere(item.center, 0.05f);
                 //Debug.Log("item:"+item+ " Size:"+item.size);
                 Gizmos.DrawWireCube(item.center, item.size);
                 Gizmos.color = originalColor;

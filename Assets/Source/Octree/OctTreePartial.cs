@@ -4,14 +4,15 @@ using UnityEngine;
 
 public partial class OctTree
 {
+
     private class OctNode
     {
         public Bounds BoundingBox { get; private set; }
         public Vector3 Centre { get; private set; }
         public OctNode Parent { get; private set; }
         private Vector3[] mVertices;
-        private readonly OctNode[] mChildNodes;
-        private List<GameObject> mContainer;
+        private readonly OctNode[] mChildNodes = new OctNode[OctTree.MAX_LEAF_NODES];
+        private List<GameObject> mContainer = new List<GameObject>(OctTree.MAX_CONTAINER_SIZE);
         /// <summary>
         /// initalize root node
         /// </summary>
@@ -19,49 +20,9 @@ public partial class OctTree
         /// <param name="span"></param>
         internal OctNode(Vector3 centre, float span)
         {
-            BoundingBox = new Bounds(centre, new Vector3(span * 2, span * 2, span * 2));
-            Debug.Log($"[OctNode]BoundingBox:{BoundingBox}");
-            Centre = BoundingBox.center;
-            mChildNodes = new OctNode[OctTree.MAX_LEAF_NODES];
-            Parent = null;
-        }
-
-        internal List<Bounds> GetChildRegions()
-        {
-            List<Bounds> regions = new List<Bounds>(mChildNodes.Length);
-            foreach (OctNode item in mChildNodes)
-            {
-                if (item != null)
-                {
-                    regions.Add(item.BoundingBox);
-                    regions.AddRange(item.GetChildRegions());
-                }
-            }
-            return regions;
-        }
-
-        internal OctNode Insert(Bounds objBounds)
-        {
-            if (!this.BoundingBox.Intersects(objBounds))
-            {
-                return null;
-            }
-
-            foreach (var item in mChildNodes)
-            {
-                if (item != null)
-                {
-                    OctNode node = item.Insert(objBounds);
-                    if (node != null)
-                    {
-                        Debug.Log($"inser node valid:{node.BoundingBox}");
-                        return node;
-                    }
-                }
-            }
-
-
-            return this;
+            Bounds bounds = new Bounds(centre, new Vector3(span * 2, span * 2, span * 2));
+            bounds.extents = new Vector3(Mathf.Abs(bounds.extents.x), Mathf.Abs(bounds.extents.y), Mathf.Abs(bounds.extents.z));
+            Initialize(bounds, null);
         }
 
         /// <summary>
@@ -72,13 +33,19 @@ public partial class OctTree
         /// <param name="regionMax"></param>
         OctNode(OctNode parent, Vector3 regionMin, Vector3 regionMax)
         {
+            if (parent == null) throw new ArgumentNullException(nameof(parent));
+            if (regionMin == regionMax) throw new ArgumentException($"{nameof(regionMin)} and {nameof(regionMax)} can't be equal");
+
             Bounds bound = new Bounds();
             bound.SetMinMax(regionMin, regionMax);
             bound.extents = new Vector3(Mathf.Abs(bound.extents.x), Mathf.Abs(bound.extents.y), Mathf.Abs(bound.extents.z));
-            //Debug.Log($"[OctNode][regionMin:{regionMin}, regionMax:{regionMax}],  bound:{bound}");
-            BoundingBox = bound; //because Bounds is struct and is mutable
+            Initialize(bound, parent);
+        }
+
+        private void Initialize(Bounds area, OctNode parent = null)
+        {
+            BoundingBox = area; //because Bounds is struct and is mutable
             Centre = BoundingBox.center;
-            mChildNodes = new OctNode[OctTree.MAX_LEAF_NODES];
             Parent = parent;
         }
 
@@ -97,28 +64,44 @@ public partial class OctTree
             return regions;
         }
 
-        internal OctNode Insert(Bounds objBounds)
+        internal bool Insert(GameObject gameObject, Bounds objBounds, out OctNode container)
         {
-            if (!this.BoundingBox.Intersects(objBounds))
+            container = null;
+            bool success = false;
+            Bounds bounds = this.BoundingBox;
+            if (bounds.size.sqrMagnitude > objBounds.size.sqrMagnitude)
             {
-                return null;
-            }
-
-            foreach (var item in mChildNodes)
-            {
-                if (item != null)
+                if (bounds.Contains(objBounds.center))
                 {
-                    OctNode node = item.Insert(objBounds);
-                    if (node != null)
+                    if (this.BoundingBox.Intersects(objBounds))
                     {
-                        Debug.Log($"inser node valid:{node.BoundingBox}");
-                        return node;
+                        if (!InsertInChildNodes(gameObject, objBounds, out container))
+                        {
+                            //if the object doesn't fit in any of the children then add it to this node's contaier
+                            container = this;
+                            mContainer.Add(gameObject);
+                        }
+                        success = true;
                     }
                 }
             }
+            return success;
+        }
 
-
-            return this;
+        private bool InsertInChildNodes(GameObject gameObject, Bounds objBounds, out OctNode container)
+        {
+            foreach (OctNode item in mChildNodes)
+            {
+                if (item != null)
+                {
+                    if (item.Insert(gameObject, objBounds, out container))
+                    {
+                        return true;
+                    }
+                }
+            }
+            container = null;
+            return false;
         }
 
         private Vector3[] GetEdgeVerticesOfCube(Bounds bound)
