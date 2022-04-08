@@ -4,15 +4,19 @@ using UnityEngine;
 
 public partial class OctTree
 {
-
     private class OctNode
     {
         public Bounds BoundingBox { get; private set; }
         public Vector3 Centre { get; private set; }
         public OctNode Parent { get; private set; }
+        public bool IsEmpty { get; private set; }
+
         private Vector3[] mVertices;
         private readonly OctNode[] mChildNodes = new OctNode[OctTree.MAX_LEAF_NODES];
         private List<GameObject> mContainer = new List<GameObject>(OctTree.MAX_CONTAINER_SIZE);
+        private List<Bounds> mAllChildAreas;
+        private bool mNodesUpdated;
+
         /// <summary>
         /// initalize root node
         /// </summary>
@@ -47,22 +51,34 @@ public partial class OctTree
             BoundingBox = area; //because Bounds is struct and is mutable
             Centre = BoundingBox.center;
             Parent = parent;
+            mNodesUpdated = false;
         }
 
 
         internal List<Bounds> GetChildRegions()
         {
-            List<Bounds> regions = new List<Bounds>(mChildNodes.Length);
-            foreach (OctNode item in mChildNodes)
+            if (mAllChildAreas == null || mNodesUpdated)
             {
-                if (item != null)
+                mAllChildAreas = new List<Bounds>(OctTree.MAX_LEAF_NODES);
+                foreach (OctNode item in mChildNodes)
                 {
-                    regions.Add(item.BoundingBox);
-                    regions.AddRange(item.GetChildRegions());
+                    if (item != null)
+                    {
+                        mAllChildAreas.Add(item.BoundingBox);
+                        mAllChildAreas.AddRange(item.GetChildRegions());
+                    }
                 }
+                mAllChildAreas.TrimExcess();
             }
-            return regions;
+            return mAllChildAreas;
         }
+
+
+        internal List<Bounds> GetNonEmptyChildRegions()
+        {
+            throw new NotImplementedException();
+        }
+
 
         internal bool Insert(GameObject gameObject, Bounds objBounds, out OctNode container)
         {
@@ -85,6 +101,7 @@ public partial class OctTree
                     }
                 }
             }
+            IsEmpty = (mContainer.Count < 1);
             return success;
         }
 
@@ -148,6 +165,7 @@ public partial class OctTree
         public void BuildLeafNodes(float smallestNodeSpan)
         {
             SubDivideRegion(smallestNodeSpan);
+            mNodesUpdated = true;
         }
     }
 }

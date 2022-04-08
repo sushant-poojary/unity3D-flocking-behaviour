@@ -26,6 +26,11 @@ public partial class OctTree
         return mRoot.GetChildRegions();
     }
 
+    public List<Bounds> GetNonEmptyRegions()
+    {
+        return mRoot.GetNonEmptyChildRegions();
+    }
+
     public void BuildTree()
     {
         mRoot.BuildLeafNodes(MinSpaceSpan);
