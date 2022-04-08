@@ -2,22 +2,31 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-//[ExecuteInEditMode]
+[ExecuteInEditMode]
 public class SpatialOctree : MonoBehaviour
 {
     public Transform Boid;
-    OctTree sdom;
-    Bounds sDmonBounds;
+    OctTree mSpaceTree;
+    Bounds mSpaceBounds;
     List<Bounds> allRegions;
-    List<GameObject>[,,] spatialBoxes = new List<GameObject>[0, 0, 0];
+    List<Color> allRegionsColor;
+    private Bounds mContainerBound;
 
-    bool flag = false;
+    //List<GameObject>[,,] spatialBoxes = new List<GameObject>[0, 0, 0];
+
     // Start is called before the first frame update
     void Start()
     {
-        sdom = new OctTree(transform.position, 50, 10);
-
-        sDmonBounds = sdom.GetRootArea();
+        allRegionsColor = new List<Color>();
+        mSpaceTree = new OctTree(transform.position, 10, 1);
+        mSpaceBounds = mSpaceTree.GetRootArea();
+        mSpaceTree.BuildTree();
+        allRegions = mSpaceTree.GetAllRegions();
+        for (int i = 0; i < allRegions.Count; i++)
+        {
+            allRegionsColor.Add(Color.black);
+            //allRegionsColor.Add(new Color(Random.insideUnitSphere.x, Random.insideUnitSphere.y, Random.insideUnitSphere.z));
+        }
         //int cellX = Mathf.RoundToInt(sDmonBounds.size.x / 10f);
         //int cellY = Mathf.RoundToInt(sDmonBounds.size.y / 10f);
         //int cellZ = Mathf.RoundToInt(sDmonBounds.size.z / 10f);
@@ -25,16 +34,6 @@ public class SpatialOctree : MonoBehaviour
 
 
 
-    }
-
-    private void LateUpdate()
-    {
-        if (!flag)
-        {
-            sdom.BuildTree();
-            allRegions = sdom.GetAllRegions();
-            flag = true;
-        }
     }
 
     // Update is called once per frame
@@ -52,43 +51,67 @@ public class SpatialOctree : MonoBehaviour
      boundPoint6 = Vector3(boundPoint1.x, boundPoint2.y, boundPoint2.z);
      boundPoint7 = Vector3(boundPoint2.x, boundPoint1.y, boundPoint2.z);
      boundPoint8 = Vector3(boundPoint2.x, boundPoint2.y, boundPoint1.z);*/
+         mContainerBound = mSpaceTree.Insert(Boid.gameObject);
+       
+    }
+
+    private void OnGUI()
+    {
+        if (GUILayout.Button("test"))
+        {
+             mContainerBound = mSpaceTree.Insert(Boid.gameObject);
+        }
     }
 
     private void OnDrawGizmos()
     {
         Color originalColor = Gizmos.color;
-        //if (allRegions != null)
-        //{
-        //    foreach (var item in allRegions)
-        //    {
-        //        Gizmos.DrawSphere(item.center, 0.5f);
-        //        Gizmos.DrawWireCube(item.center, sDmonBounds.size);
-        //    }
-        //}
-
-        Vector3 min = sDmonBounds.min;
-        Vector3 max = sDmonBounds.max;
-        Vector3 pairA1 = new Vector3(min.x, max.y, min.z);
-        Vector3 pairB1 = min;
-        Vector3 pairC1 = new Vector3(max.x, min.y, min.z);
-        Vector3 pairD1 = new Vector3(max.x, max.y, min.z);
-
-        Vector3 pairA2 = new Vector3(min.x, max.y, max.z);
-        Vector3 pairB2 = new Vector3(min.x, min.y, max.z);
-        Vector3 pairC2 = new Vector3(max.x, min.y, max.z);
-        Vector3 pairD2 = max;
-
-        Vector3[] edgePoints = new Vector3[8] { pairA1, pairB1, pairC1, pairD1, pairA2, pairB2, pairC2, pairD2 };
-
-        foreach (var item in edgePoints)
+        if (allRegions != null && allRegions.Count > 0)
         {
-            Bounds box3 = new Bounds();
-            box3.SetMinMax(sDmonBounds.center, item);
+            for (int i = 0; i < allRegions.Count; i++)
+            {
+                var item = allRegions[i];
 
-            //Debug.Log(item + ",:"+sDmonBounds.center+", box3:"+box3);
-            Gizmos.DrawWireCube(box3.center, box3.size);
-            Gizmos.DrawSphere(box3.center, 1);
+                Gizmos.color = allRegionsColor[i];
+                Gizmos.DrawSphere(item.center, 0.1f);
+                //Debug.Log("item:"+item+ " Size:"+item.size);
+                Gizmos.DrawWireCube(item.center, item.size);
+                Gizmos.color = originalColor;
+            }
         }
+
+        if (mContainerBound.size != Vector3.zero)
+        {
+            Color yellow = Color.yellow;
+            yellow.a = 0.4f;
+            Gizmos.color = yellow;
+            Gizmos.DrawCube(mContainerBound.center, mContainerBound.size);
+            Gizmos.color = originalColor;
+        }
+
+        //Vector3 min = sDmonBounds.min;
+        //Vector3 max = sDmonBounds.max;
+        //Vector3 pairA1 = new Vector3(min.x, max.y, min.z);
+        //Vector3 pairB1 = min;
+        //Vector3 pairC1 = new Vector3(max.x, min.y, min.z);
+        //Vector3 pairD1 = new Vector3(max.x, max.y, min.z);
+
+        //Vector3 pairA2 = new Vector3(min.x, max.y, max.z);
+        //Vector3 pairB2 = new Vector3(min.x, min.y, max.z);
+        //Vector3 pairC2 = new Vector3(max.x, min.y, max.z);
+        //Vector3 pairD2 = max;
+
+        //Vector3[] edgePoints = new Vector3[8] { pairA1, pairB1, pairC1, pairD1, pairA2, pairB2, pairC2, pairD2 };
+
+        //foreach (var item in edgePoints)
+        //{
+        //    Bounds box3 = new Bounds();
+        //    box3.SetMinMax(sDmonBounds.center, item);
+
+        //    //Debug.Log(item + ",:"+sDmonBounds.center+", box3:"+box3);
+        //    Gizmos.DrawWireCube(box3.center, box3.size);
+        //    Gizmos.DrawSphere(box3.center, 1);
+        //}
 
         /*
         Gizmos.color = Color.red;
@@ -189,7 +212,7 @@ public class SpatialOctree : MonoBehaviour
 
         }
         */
-
+        /*
         Gizmos.color = Color.red;
         {
             Gizmos.DrawSphere(pairA1, 1);
@@ -217,6 +240,6 @@ public class SpatialOctree : MonoBehaviour
             //Gizmos.DrawLine(pairD2, pairA2);
         }
         Gizmos.color = originalColor;
-
+        */
     }
 }
