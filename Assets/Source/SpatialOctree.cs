@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[ExecuteInEditMode]
+//[ExecuteInEditMode]
 public class SpatialOctree : MonoBehaviour
 {
     public Transform Boid;
@@ -12,6 +12,7 @@ public class SpatialOctree : MonoBehaviour
     List<Color> allRegionsColor;
     private Bounds mContainerBound;
 
+    public List<OctNode> NodesToLoop;
     //List<GameObject>[,,] spatialBoxes = new List<GameObject>[0, 0, 0];
 
     // Start is called before the first frame update
@@ -51,9 +52,10 @@ public class SpatialOctree : MonoBehaviour
      boundPoint6 = Vector3(boundPoint1.x, boundPoint2.y, boundPoint2.z);
      boundPoint7 = Vector3(boundPoint2.x, boundPoint1.y, boundPoint2.z);
      boundPoint8 = Vector3(boundPoint2.x, boundPoint2.y, boundPoint1.z);*/
-        if (mSpaceTree.Insert(Boid.gameObject, out mContainerBound))
-        {
-        }
+        //if (mSpaceTree.Insert(Boid.gameObject, out mContainerBound))
+        //{
+
+        //}
 
     }
 
@@ -62,6 +64,8 @@ public class SpatialOctree : MonoBehaviour
         if (GUILayout.Button("test"))
         {
             mSpaceTree.Insert(Boid.gameObject, out mContainerBound);
+
+            NodesToLoop = mSpaceTree.GetNonEmptyRegions();
         }
     }
 
