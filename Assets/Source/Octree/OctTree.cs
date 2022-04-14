@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public partial class OctTree
+public partial class OctTree<T>
 {
     public const int MAX_LEAF_NODES = 8;
     public const int MIN_SPACE_SPAN = 1;
@@ -9,8 +9,7 @@ public partial class OctTree
 
     public int MinSpaceSpan { get; private set; }
     private readonly OctNode mRoot;
-    private List<Bounds> gameobjectBounds;
-    private List<GameObject> gameobjects;
+    private Dictionary<T, Bounds> mBoundsByGameobject;
     public List<OctNode> mChildNodes;
     private List<OctNode> mFlattenedNodes;
     private List<Bounds> mFlattenedRegions;
@@ -72,29 +71,25 @@ public partial class OctTree
 
     public void BuildTree()
     {
-        mRoot.BuildLeafNodes(MinSpaceSpan);
+        ((IOctNode)mRoot).BuildLeafNodes(MinSpaceSpan);
         BuildFlattenedRegions();
-        gameobjectBounds = new List<Bounds>();
-        gameobjects = new List<GameObject>();
     }
 
-    public bool Insert(GameObject gameObject, out Bounds bounds)
+    public bool Insert(ITreeChild gameObject, out OctNode node)
     {
-        bounds = new Bounds();
-        Bounds objBounds = gameObject.GetComponent<BoxCollider>().bounds;
-        gameobjectBounds.Add(objBounds);
-        gameobjects.Add(gameObject);
-        OctNode containingNode;
-        if (mRoot.Insert(gameObject, objBounds, out containingNode))
-        {
-            bounds = containingNode.BoundingBox;
-            return true;
-        }
-        return false;
+        node = null;
+        //Bounds objBounds;
+        //if (!mBoundsByGameobject.TryGetValue(gameObject, out objBounds))
+        //{
+        //    objBounds = gameObject.GetComponent<BoxCollider>().bounds;
+        //    mBoundsByGameobject.Add(gameObject, objBounds);
+        //}
+        return ((IOctNode)mRoot).Insert(gameObject, out node);
     }
 
     public void Update()
     {
+
         //bounds = new Bounds();
         //Bounds objBounds = gameObject.GetComponent<BoxCollider>().bounds;
         //OctNode containingNode;
@@ -104,7 +99,5 @@ public partial class OctTree
         //    return true;
         //}
         //return false;
-
-
     }
 }

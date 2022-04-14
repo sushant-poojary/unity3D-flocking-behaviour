@@ -5,21 +5,23 @@ using UnityEngine;
 //[ExecuteInEditMode]
 public class SpatialOctree : MonoBehaviour
 {
+    public Boid BoidObj;
     public Transform Boid;
-    OctTree mSpaceTree;
+    OctTree<Boid> mSpaceTree;
     Bounds mSpaceBounds;
     List<Bounds> allRegions;
     List<Color> allRegionsColor;
-    private Bounds mContainerBound;
+    private OctTree<Boid>.OctNode mContainerBound;
 
-    public List<OctNode> NodesToLoop;
+    public List<OctTree<Boid>.OctNode> NodesToLoop;
     //List<GameObject>[,,] spatialBoxes = new List<GameObject>[0, 0, 0];
 
     // Start is called before the first frame update
     void Start()
     {
+        BoidObj = new Boid(Boid.gameObject);
         allRegionsColor = new List<Color>();
-        mSpaceTree = new OctTree(transform.position, 10, 2);
+        mSpaceTree = new OctTree<Boid>(transform.position, 10, 2);
         mSpaceBounds = mSpaceTree.GetRootArea();
         mSpaceTree.BuildTree();
         allRegions = mSpaceTree.GetAllRegions();
@@ -63,7 +65,7 @@ public class SpatialOctree : MonoBehaviour
     {
         if (GUILayout.Button("test"))
         {
-            mSpaceTree.Insert(Boid.gameObject, out mContainerBound);
+            Debug.Log("success?:"+ mSpaceTree.Insert(BoidObj, out mContainerBound));
 
             NodesToLoop = mSpaceTree.GetNonEmptyRegions();
         }
@@ -86,12 +88,12 @@ public class SpatialOctree : MonoBehaviour
             }
         }
 
-        if (mContainerBound.size != Vector3.zero)
+        if (mContainerBound != null && mContainerBound.BoundingBox.size != Vector3.zero)
         {
             Color yellow = Color.yellow;
             yellow.a = 0.4f;
             Gizmos.color = yellow;
-            Gizmos.DrawCube(mContainerBound.center, mContainerBound.size);
+            Gizmos.DrawCube(mContainerBound.BoundingBox.center, mContainerBound.BoundingBox.size);
             Gizmos.color = originalColor;
         }
 
