@@ -16,12 +16,12 @@ public partial class OctTree<T>
         public Vector3 Centre { get; private set; }
         public OctNode Parent { get; private set; }
         public bool IsEmpty { get; private set; }
+        public string ID { get; private set; }
 
         private Vector3[] mVertices;
         private readonly List<OctNode> mChildNodes = new List<OctNode>(OctTree<T>.MAX_LEAF_NODES);
         private List<ITreeChild> mContainer = new List<ITreeChild>(OctTree<T>.MAX_CONTAINER_SIZE);
         private bool mNodesUpdated;
-
         internal IEnumerable<OctNode> GetChildren()
         {
             return mChildNodes;
@@ -34,6 +34,7 @@ public partial class OctTree<T>
         /// <param name="span"></param>
         internal OctNode(Vector3 centre, float span)
         {
+            ID = "root";
             Bounds bounds = new Bounds(centre, new Vector3(span * 2, span * 2, span * 2));
             bounds.extents = new Vector3(Mathf.Abs(bounds.extents.x), Mathf.Abs(bounds.extents.y), Mathf.Abs(bounds.extents.z));
             Initialize(bounds, null);
@@ -53,6 +54,7 @@ public partial class OctTree<T>
             Bounds bound = new Bounds();
             bound.SetMinMax(regionMin, regionMax);
             bound.extents = new Vector3(Mathf.Abs(bound.extents.x), Mathf.Abs(bound.extents.y), Mathf.Abs(bound.extents.z));
+            ID = parent.ID + ":" + bound.extents.ToString();
             Initialize(bound, parent);
         }
 
@@ -111,39 +113,57 @@ public partial class OctTree<T>
         //}
 
 
-        private bool Insert(ITreeChild gameObject, out OctNode container)
+        internal bool RemoveChild(ITreeChild child)
+        {
+            return mContainer.Remove(child);
+        }
+
+        private bool Insert(ITreeChild child, out OctNode container)
         {
             container = null;
             bool success = false;
             Bounds bounds = this.BoundingBox;
-            Bounds objBounds = gameObject.Bounds;
+            Bounds objBounds = child.Bounds;
             if (bounds.size.sqrMagnitude > objBounds.size.sqrMagnitude)
             {
-                if (bounds.Contains(objBounds.center))
+                 Debug.LogWarning(ID+"--- :"+bounds +" to check:"+objBounds.center+".Contains(objBounds.center):"+mContainer.Count);
+                if (bounds.Contains(objBounds.center) && mContainer.Count < OctTree<T>.MAX_CONTAINER_SIZE)
                 {
-                    if (this.BoundingBox.Intersects(objBounds))
+                    if (bounds.Intersects(objBounds))
                     {
-                        if (!InsertInChildNodes(gameObject, out container))
+                        if (!InsertInChildNodes(child, out container))
                         {
                             //if the object doesn't fit in any of the children then add it to this node's contaier
                             container = this;
-                            mContainer.Add(gameObject);
+                            mContainer.Add(child);
                         }
                         success = true;
                     }
+                    else
+                    {
+                        Debug.LogWarning("bounds.Intersects(objBounds)");
+                    }
                 }
+                else
+                {
+                    Debug.LogWarning(ID+"--- :"+bounds +"bounds.Contains(objBounds.center):"+mContainer.Count);
+                }
+            }
+            else
+            {
+                Debug.LogWarning("bounds.size.sqrMagnitude > objBounds.size.sqrMagnitude:");
             }
             IsEmpty = (mContainer.Count < 1);
             return success;
         }
 
-        private bool InsertInChildNodes(ITreeChild gameObject, out OctNode container)
+        private bool InsertInChildNodes(ITreeChild child, out OctNode container)
         {
             foreach (OctNode item in mChildNodes)
             {
                 if (item != null)
                 {
-                    if (item.Insert(gameObject, out container))
+                    if (item.Insert(child, out container))
                     {
                         return true;
                     }

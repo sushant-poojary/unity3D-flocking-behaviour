@@ -5,7 +5,7 @@ public partial class OctTree<T>
 {
     public const int MAX_LEAF_NODES = 8;
     public const int MIN_SPACE_SPAN = 1;
-    public const int MAX_CONTAINER_SIZE = 100;
+    public const int MAX_CONTAINER_SIZE = 50;
 
     public int MinSpaceSpan { get; private set; }
     private readonly OctNode mRoot;
@@ -77,18 +77,30 @@ public partial class OctTree<T>
 
     public bool Insert(ITreeChild gameObject, out OctNode node)
     {
-        node = null;
-        //Bounds objBounds;
-        //if (!mBoundsByGameobject.TryGetValue(gameObject, out objBounds))
-        //{
-        //    objBounds = gameObject.GetComponent<BoxCollider>().bounds;
-        //    mBoundsByGameobject.Add(gameObject, objBounds);
-        //}
         return ((IOctNode)mRoot).Insert(gameObject, out node);
     }
 
-    public void Update()
+    public bool Update(ITreeChild child, OctTree<T>.OctNode currentNode, out OctTree<T>.OctNode newNode)
     {
+        OctTree<T>.OctNode nodeToInsertIn;
+        if (currentNode.Parent == mRoot || currentNode.Parent == null)
+        {
+            nodeToInsertIn = mRoot;
+        }
+        else
+        {
+            nodeToInsertIn = currentNode.Parent;
+        }
+
+        if (((IOctNode)nodeToInsertIn).Insert(child, out newNode))
+        {
+            if (newNode != currentNode)
+                return currentNode.RemoveChild(child);
+            //{
+            //    throw new System.Exception("Failed to remove "+child+" from node:"+currentNode);
+            //}
+        }
+        return false;
 
         //bounds = new Bounds();
         //Bounds objBounds = gameObject.GetComponent<BoxCollider>().bounds;

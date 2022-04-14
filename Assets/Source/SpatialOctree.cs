@@ -5,26 +5,26 @@ using UnityEngine;
 //[ExecuteInEditMode]
 public class SpatialOctree : MonoBehaviour
 {
-    public Boid BoidObj;
-    public Transform Boid;
-    OctTree<Boid> mSpaceTree;
+    //public Boid BoidObj;
+    //public Transform Boid;
+    public OctTree<Boid> SpaceTree { get; private set; }
     Bounds mSpaceBounds;
     List<Bounds> allRegions;
     List<Color> allRegionsColor;
-    private OctTree<Boid>.OctNode mContainerBound;
+    //private OctTree<Boid>.OctNode mContainerBound;
 
     public List<OctTree<Boid>.OctNode> NodesToLoop;
     //List<GameObject>[,,] spatialBoxes = new List<GameObject>[0, 0, 0];
 
     // Start is called before the first frame update
-    void Start()
+    void Awake()
     {
-        BoidObj = new Boid(Boid.gameObject);
+        //BoidObj = new Boid(Boid.gameObject);
         allRegionsColor = new List<Color>();
-        mSpaceTree = new OctTree<Boid>(transform.position, 10, 2);
-        mSpaceBounds = mSpaceTree.GetRootArea();
-        mSpaceTree.BuildTree();
-        allRegions = mSpaceTree.GetAllRegions();
+        SpaceTree = new OctTree<Boid>(transform.position, 10, 2);
+        mSpaceBounds = SpaceTree.GetRootArea();
+        SpaceTree.BuildTree();
+        allRegions = SpaceTree.GetAllRegions();
         for (int i = 0; i < allRegions.Count; i++)
         {
             allRegionsColor.Add(Color.black);
@@ -61,15 +61,15 @@ public class SpatialOctree : MonoBehaviour
 
     }
 
-    private void OnGUI()
-    {
-        if (GUILayout.Button("test"))
-        {
-            Debug.Log("success?:"+ mSpaceTree.Insert(BoidObj, out mContainerBound));
+    //private void OnGUI()
+    //{
+    //    if (GUILayout.Button("test"))
+    //    {
+    //        Debug.Log("success?:"+ mSpaceTree.Insert(BoidObj, out mContainerBound));
 
-            NodesToLoop = mSpaceTree.GetNonEmptyRegions();
-        }
-    }
+    //        NodesToLoop = mSpaceTree.GetNonEmptyRegions();
+    //    }
+    //}
 
     private void OnDrawGizmos()
     {
@@ -88,14 +88,14 @@ public class SpatialOctree : MonoBehaviour
             }
         }
 
-        if (mContainerBound != null && mContainerBound.BoundingBox.size != Vector3.zero)
-        {
-            Color yellow = Color.yellow;
-            yellow.a = 0.4f;
-            Gizmos.color = yellow;
-            Gizmos.DrawCube(mContainerBound.BoundingBox.center, mContainerBound.BoundingBox.size);
-            Gizmos.color = originalColor;
-        }
+        //if (mContainerBound != null && mContainerBound.BoundingBox.size != Vector3.zero)
+        //{
+        //    Color yellow = Color.yellow;
+        //    yellow.a = 0.4f;
+        //    Gizmos.color = yellow;
+        //    Gizmos.DrawCube(mContainerBound.BoundingBox.center, mContainerBound.BoundingBox.size);
+        //    Gizmos.color = originalColor;
+        //}
 
         //Vector3 min = sDmonBounds.min;
         //Vector3 max = sDmonBounds.max;
