@@ -37,7 +37,7 @@ public class Main : MonoBehaviour
             if (mSpatialTree.SpaceTree.Insert(boid, out container))
             {
                 boid.ContainerNode = container;
-                Debug.LogError("[START]container: " + container.ID);
+                Debug.LogError("--------------------------[START]container: " + container.ID);
             }
             yield return new WaitForEndOfFrame();
         }
@@ -51,7 +51,7 @@ public class Main : MonoBehaviour
         if (!mStartMovement) return;
         for (int i = 0; i < mBoidCount; i++)
         {
-            var boid = mTreeChildren[i];
+            Boid boid = mTreeChildren[i];
             boid.Move(new Vector3(0, 0, 0.5f));
             OctTree<Boid>.OctNode container;
             //Debug.Log("Boid to bounds " + boid.Bounds);
@@ -62,7 +62,7 @@ public class Main : MonoBehaviour
             }
             else
             {
-                Debug.LogError("Failed to update " + boid + " from node:" + boid.ContainerNode);
+                //Debug.LogError("Failed to update " + boid + " from node:" + boid.ContainerNode);
             }
         }
     }

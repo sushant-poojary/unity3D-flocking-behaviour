@@ -34,9 +34,9 @@ public partial class OctTree<T>
         /// <param name="span"></param>
         internal OctNode(Vector3 centre, float span)
         {
-            ID = "root";
             Bounds bounds = new Bounds(centre, new Vector3(span * 2, span * 2, span * 2));
             bounds.extents = new Vector3(Mathf.Abs(bounds.extents.x), Mathf.Abs(bounds.extents.y), Mathf.Abs(bounds.extents.z));
+            ID = $"root->[{bounds.center} X {bounds.extents }]";
             Initialize(bounds, null);
         }
 
@@ -54,7 +54,7 @@ public partial class OctTree<T>
             Bounds bound = new Bounds();
             bound.SetMinMax(regionMin, regionMax);
             bound.extents = new Vector3(Mathf.Abs(bound.extents.x), Mathf.Abs(bound.extents.y), Mathf.Abs(bound.extents.z));
-            ID = parent.ID + ":" + bound.extents.ToString();
+            ID = $"{parent.ID}->[{bound.center} X {bound.extents }]";
             Initialize(bound, parent);
         }
 
@@ -115,7 +115,10 @@ public partial class OctTree<T>
 
         internal bool RemoveChild(ITreeChild child)
         {
-            return mContainer.Remove(child);
+            bool s = mContainer.Remove(child);
+
+            Debug.Log($"Removing child from:{ID}. Success?{s}. Mcontainer count:({mContainer.Count})");
+            return s;
         }
 
         private bool Insert(ITreeChild child, out OctNode container)
@@ -124,9 +127,10 @@ public partial class OctTree<T>
             bool success = false;
             Bounds bounds = this.BoundingBox;
             Bounds objBounds = child.Bounds;
+            Debug.Log($"CHecking node {this.ID}. Child Bound:{objBounds}");
             if (bounds.size.sqrMagnitude > objBounds.size.sqrMagnitude)
             {
-                 Debug.LogWarning(ID+"--- :"+bounds +" to check:"+objBounds.center+".Contains(objBounds.center):"+mContainer.Count);
+                //Debug.Log(ID + "--- :" + bounds + "------ to check Centre:" + objBounds + ":" + mContainer.Count);
                 if (bounds.Contains(objBounds.center) && mContainer.Count < OctTree<T>.MAX_CONTAINER_SIZE)
                 {
                     if (bounds.Intersects(objBounds))
@@ -134,24 +138,25 @@ public partial class OctTree<T>
                         if (!InsertInChildNodes(child, out container))
                         {
                             //if the object doesn't fit in any of the children then add it to this node's contaier
+                            Debug.Log($"Adding child to {ID}");
                             container = this;
-                            mContainer.Add(child);
+                            if (!mContainer.Contains(child)) mContainer.Add(child);
                         }
                         success = true;
                     }
                     else
                     {
-                        Debug.LogWarning("bounds.Intersects(objBounds)");
+                        Debug.LogWarning($"FAILED! in region:{ID}  bounds don't intersect or mContainer(count:{mContainer.Count}) already has the child.");
                     }
                 }
                 else
                 {
-                    Debug.LogWarning(ID+"--- :"+bounds +"bounds.Contains(objBounds.center):"+mContainer.Count);
+                    Debug.LogWarning($"FAILED! in region:{ID}. Either centree is outside bounds or mContainer(count:{mContainer.Count}) is full max capacity:{ OctTree<T>.MAX_CONTAINER_SIZE}.");
                 }
             }
             else
             {
-                Debug.LogWarning("bounds.size.sqrMagnitude > objBounds.size.sqrMagnitude:");
+                Debug.LogWarning($"FAILED! in region:{ID}. bounds.size.sqrMagnitude > objBounds.size.sqrMagnitude:");
             }
             IsEmpty = (mContainer.Count < 1);
             return success;

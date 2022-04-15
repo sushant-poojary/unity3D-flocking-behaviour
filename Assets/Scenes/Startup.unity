@@ -154,7 +154,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   BirdPrefab: {fileID: 6276246821076110520, guid: ddfbbe0df2bf39c4abe842f5a399713f, type: 3}
   mSpatialTree: {fileID: 701972527}
-  NumberOfBirds: 2
+  NumberOfBirds: 1
 --- !u!4 &357585795
 Transform:
   m_ObjectHideFlags: 0
@@ -491,13 +491,13 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 449131818, guid: ddfbbe0df2bf39c4abe842f5a399713f, type: 3}
-      propertyPath: m_IsTrigger
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 6276246821076110520, guid: ddfbbe0df2bf39c4abe842f5a399713f, type: 3}
       propertyPath: m_Name
       value: Eagle
+      objectReference: {fileID: 0}
+    - target: {fileID: 6276246821076110520, guid: ddfbbe0df2bf39c4abe842f5a399713f, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6276246821076110523, guid: ddfbbe0df2bf39c4abe842f5a399713f, type: 3}
       propertyPath: m_RootOrder

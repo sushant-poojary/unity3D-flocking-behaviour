@@ -89,7 +89,7 @@ public partial class OctTree<T>
         }
         else
         {
-            nodeToInsertIn = currentNode.Parent;
+            nodeToInsertIn = mRoot;//currentNode.Parent.Parent;
         }
 
         if (((IOctNode)nodeToInsertIn).Insert(child, out newNode))
