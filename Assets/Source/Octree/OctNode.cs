@@ -116,8 +116,7 @@ public partial class OctTree<T>
         internal bool RemoveChild(ITreeChild child)
         {
             bool s = mContainer.Remove(child);
-
-            Debug.Log($"Removing child from:{ID}. Success?{s}. Mcontainer count:({mContainer.Count})");
+            //Debug.Log($"Removing child from:{ID}. Success?{s}. Mcontainer count:({mContainer.Count})");
             return s;
         }
 
@@ -138,7 +137,7 @@ public partial class OctTree<T>
                         if (!InsertInChildNodes(child, out container))
                         {
                             //if the object doesn't fit in any of the children then add it to this node's contaier
-                            Debug.Log($"Adding child to {ID}");
+                            //Debug.Log($"Adding child to {ID}");
                             container = this;
                             if (!mContainer.Contains(child)) mContainer.Add(child);
                         }

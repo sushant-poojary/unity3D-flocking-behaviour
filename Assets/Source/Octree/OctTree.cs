@@ -83,14 +83,16 @@ public partial class OctTree<T>
     public bool Update(ITreeChild child, OctTree<T>.OctNode currentNode, out OctTree<T>.OctNode newNode)
     {
         OctTree<T>.OctNode nodeToInsertIn;
-        if (currentNode.Parent == mRoot || currentNode.Parent == null)
-        {
-            nodeToInsertIn = mRoot;
-        }
-        else
-        {
-            nodeToInsertIn = mRoot;//currentNode.Parent.Parent;
-        }
+        nodeToInsertIn = currentNode.Parent;
+        if (nodeToInsertIn == null) nodeToInsertIn = mRoot;
+        //if (currentNode.Parent == mRoot || currentNode.Parent == null)
+        //{
+        //    nodeToInsertIn = mRoot;
+        //}
+        //else
+        //{
+        //    nodeToInsertIn = currentNode.Parent.Parent;
+        //}
 
         if (((IOctNode)nodeToInsertIn).Insert(child, out newNode))
         {

@@ -33,6 +33,7 @@ public class Main : MonoBehaviour
             var z = Random.Range(mainArea.min.z + 0.5f, mainArea.max.z - 0.5f);
             Vector3 randomPosition = new Vector3(x, y, z);
             bird.transform.position = randomPosition;
+            Physics.SyncTransforms();
             OctTree<Boid>.OctNode container;
             if (mSpatialTree.SpaceTree.Insert(boid, out container))
             {
@@ -41,6 +42,7 @@ public class Main : MonoBehaviour
             }
             yield return new WaitForEndOfFrame();
         }
+        
         mTreeChildren.TrimExcess();
         mStartMovement = true;
     }
@@ -58,7 +60,7 @@ public class Main : MonoBehaviour
             if (mSpatialTree.SpaceTree.Update(boid, boid.ContainerNode, out container))
             {
                 boid.ContainerNode = container;
-                Debug.LogError("[Update] container: " + container.ID);
+                //Debug.Log("[Update] container: " + container.ID);
             }
             else
             {
@@ -88,7 +90,7 @@ public class Main : MonoBehaviour
                     if (bounds.size != Vector3.zero)
                     {
                         Color yellow = Color.yellow;
-                        yellow.a = 0.4f;
+                        yellow.a = 0.7f;
                         Gizmos.color = yellow;
                         Gizmos.DrawCube(bounds.center, bounds.size);
                         Gizmos.color = originalColor;
