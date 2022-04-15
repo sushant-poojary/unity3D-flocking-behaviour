@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -11,9 +12,9 @@ public partial class OctTree<T>
     private readonly OctNode mRoot;
     private Dictionary<T, Bounds> mBoundsByGameobject;
     public List<OctNode> mChildNodes;
-    private List<OctNode> mFlattenedNodes;
+    //private List<OctNode> mFlattenedNodes;
     private List<Bounds> mFlattenedRegions;
-    private List<OctNode> mFlattenedNonEmptyRegions = new List<OctNode>();
+    //private List<OctNode> mFlattenedNonEmptyRegions = new List<OctNode>();
 
     public OctTree(Vector3 centre, int span, int smallestSpaceSpan)
     {
@@ -26,29 +27,26 @@ public partial class OctTree<T>
         return mRoot.BoundingBox;
     }
 
-    private void BuildFlattenedRegions()
+    private List<OctNode> GetFlattenedNodes(OctNode startingNode)
     {
-        if (mFlattenedNodes == null)
+        List<OctNode> flattenedNodes = new List<OctNode>(MAX_LEAF_NODES);
+        flattenedNodes.Add(startingNode);
+        int count = 0;
+        int nodesToScan = flattenedNodes.Count;
+        const int MAX_LOOP = 1000;
+        while (count < nodesToScan && count < MAX_LOOP)
         {
-            mFlattenedNodes = new List<OctNode>(MAX_LEAF_NODES);
-            mFlattenedRegions = new List<Bounds>(MAX_LEAF_NODES);
-            mFlattenedNodes.Add(mRoot);
-            int count = 0;
-            int nodesToScan = mFlattenedNodes.Count;
-            const int MAX_LOOP = 1000;
-            while (count < nodesToScan && count < MAX_LOOP)
+            OctNode node = flattenedNodes[count];
+            IEnumerable<OctNode> children = node.GetLeafNodes();
+            foreach (OctNode item in children)
             {
-                OctNode node = mFlattenedNodes[count];
-                mFlattenedRegions.Add(node.BoundingBox);
-                IEnumerable<OctNode> children = node.GetChildren();
-                foreach (OctNode item in children)
-                {
-                    mFlattenedNodes.Add(item);
-                    nodesToScan++;
-                }
-                count++;
+                flattenedNodes.Add(item);
+                nodesToScan++;
             }
+            count++;
         }
+        flattenedNodes.TrimExcess();
+        return flattenedNodes;
     }
 
     public List<Bounds> GetAllRegions()
@@ -56,23 +54,28 @@ public partial class OctTree<T>
         return mFlattenedRegions;
     }
 
-    public List<OctNode> GetNonEmptyRegions()
-    {
-        mFlattenedNonEmptyRegions.Clear();
-        foreach (var item in mFlattenedNodes)
-        {
-            if (!item.IsEmpty)
-            {
-                mFlattenedNonEmptyRegions.Add(item);
-            }
-        }
-        return mFlattenedNonEmptyRegions;
-    }
+    //public List<OctNode> GetNonEmptyRegions()
+    //{
+    //    mFlattenedNonEmptyRegions.Clear();
+    //    foreach (var item in mFlattenedNodes)
+    //    {
+    //        if (!item.IsEmpty)
+    //        {
+    //            mFlattenedNonEmptyRegions.Add(item);
+    //        }
+    //    }
+    //    return mFlattenedNonEmptyRegions;
+    //}
 
     public void BuildTree()
     {
         ((IOctNode)mRoot).BuildLeafNodes(MinSpaceSpan);
-        BuildFlattenedRegions();
+        var flattenedNodes = GetFlattenedNodes(mRoot);
+        mFlattenedRegions = new List<Bounds>(flattenedNodes.Count);
+        foreach (var item in flattenedNodes)
+        {
+            mFlattenedRegions.Add(item.BoundingBox);
+        }
     }
 
     public bool Insert(ITreeChild gameObject, out OctNode node)
@@ -82,36 +85,76 @@ public partial class OctTree<T>
 
     public bool Update(ITreeChild child, OctTree<T>.OctNode currentNode, out OctTree<T>.OctNode newNode)
     {
+        newNode = null;
+        if (!currentNode.Contains(child)) throw new System.Exception($"child:{child} does not exist in current Node:{currentNode}");
         OctTree<T>.OctNode nodeToInsertIn;
         nodeToInsertIn = currentNode.Parent;
         if (nodeToInsertIn == null) nodeToInsertIn = mRoot;
-        //if (currentNode.Parent == mRoot || currentNode.Parent == null)
-        //{
-        //    nodeToInsertIn = mRoot;
-        //}
-        //else
-        //{
-        //    nodeToInsertIn = currentNode.Parent.Parent;
-        //}
-
-        if (((IOctNode)nodeToInsertIn).Insert(child, out newNode))
+        while (nodeToInsertIn != null)
         {
-            if (newNode != currentNode)
-                return currentNode.RemoveChild(child);
-            //{
-            //    throw new System.Exception("Failed to remove "+child+" from node:"+currentNode);
-            //}
+            if (((IOctNode)nodeToInsertIn).Insert(child, out newNode))
+            {
+                if (newNode != currentNode)
+                    return currentNode.RemoveChild(child);
+                nodeToInsertIn = null;
+            }
+            else
+            {
+                nodeToInsertIn = nodeToInsertIn.Parent;
+            }
         }
         return false;
+    }
 
-        //bounds = new Bounds();
-        //Bounds objBounds = gameObject.GetComponent<BoxCollider>().bounds;
-        //OctNode containingNode;
-        //if (mRoot.Insert(gameObject, objBounds, out containingNode))
-        //{
-        //    bounds = containingNode.BoundingBox;
-        //    return true;
-        //}
-        //return false;
+    public IEnumerable<ITreeChild> DebugFindNeighboringChildren(ITreeChild child, OctNode currentNode, float radius, out OctNode topNode)
+    {
+        topNode = null;
+        if (!currentNode.Contains(child)) throw new System.Exception($"child:{child} does not exist in current Node:{currentNode}");
+        Bounds bounds = new Bounds(child.Position, new Vector3(radius, radius, radius));
+        OctNode containingNode = GetNodeContaining(bounds, currentNode);
+        topNode = containingNode;
+        Debug.Log($"[FindNeighboringChildren] getting children from node:{containingNode.ID}");
+        List<OctNode> allLeadNodes = GetFlattenedNodes(containingNode);
+        List<ITreeChild> children = new List<ITreeChild>(allLeadNodes.Count * OctTree<T>.MAX_CONTAINER_SIZE);
+        foreach (OctNode item in allLeadNodes)
+        {
+            children.AddRange(item.GetChildren());
+            if (item == currentNode)
+                children.Remove(child);
+        }
+        return children;
+    }
+
+    public List<ITreeChild> FindNeighboringChildren(ITreeChild child, OctNode currentNode, float radius)
+    {
+        //if (!currentNode.Contains(child)) throw new System.Exception($"child:{child} does not exist in current Node:{currentNode}");
+        Bounds bounds = new Bounds(child.Position, new Vector3(radius, radius, radius));
+        OctNode containingNode = GetNodeContaining(bounds, currentNode);
+        //Debug.Log($"[FindNeighboringChildren] getting children from node:{containingNode.ID}");
+        List<OctNode> allLeadNodes = GetFlattenedNodes(containingNode);
+        List<ITreeChild> children = new List<ITreeChild>(allLeadNodes.Count * OctTree<T>.MAX_CONTAINER_SIZE);
+        foreach (OctNode item in allLeadNodes)
+        {
+            children.AddRange(item.GetChildren());
+            //if (item == currentNode)
+            //    children.Remove(child);
+        }
+        return children;
+    }
+
+    private OctNode GetNodeContaining(Bounds bounds, OctNode currentNode)
+    {
+        while (currentNode != null)
+        {
+            if (currentNode.Contains(bounds))
+            {
+                return currentNode;
+            }
+            else
+            {
+                currentNode = currentNode.Parent;
+            }
+        }
+        return null;
     }
 }

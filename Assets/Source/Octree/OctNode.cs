@@ -19,13 +19,9 @@ public partial class OctTree<T>
         public string ID { get; private set; }
 
         private Vector3[] mVertices;
-        private readonly List<OctNode> mChildNodes = new List<OctNode>(OctTree<T>.MAX_LEAF_NODES);
-        private List<ITreeChild> mContainer = new List<ITreeChild>(OctTree<T>.MAX_CONTAINER_SIZE);
+        private readonly List<OctNode> mLeafNodes = new List<OctNode>(OctTree<T>.MAX_LEAF_NODES);
+        private readonly List<ITreeChild> mChildren = new List<ITreeChild>(OctTree<T>.MAX_CONTAINER_SIZE);
         private bool mNodesUpdated;
-        internal IEnumerable<OctNode> GetChildren()
-        {
-            return mChildNodes;
-        }
 
         /// <summary>
         /// initalize root node
@@ -67,6 +63,31 @@ public partial class OctTree<T>
             IsEmpty = true;
         }
 
+        internal bool Contains(ITreeChild child)
+        {
+            return mChildren.Contains(child);
+        }
+
+        internal IEnumerable<OctNode> GetLeafNodes()
+        {
+            return mLeafNodes;
+        }
+
+        internal IEnumerable<ITreeChild> GetChildren()
+        {
+            return mChildren;
+        }
+
+        internal bool Contains(Bounds bounds)
+        {
+            Bounds currentNodeBounds = this.BoundingBox;
+            Bounds childBound = bounds;
+            if (currentNodeBounds.size.sqrMagnitude > childBound.size.sqrMagnitude)
+            {
+                return currentNodeBounds.ContainBounds(childBound);
+            }
+            return false;
+        }
 
         //internal List<Bounds> GetChildRegions()
         //{
@@ -115,7 +136,7 @@ public partial class OctTree<T>
 
         internal bool RemoveChild(ITreeChild child)
         {
-            bool s = mContainer.Remove(child);
+            bool s = mChildren.Remove(child);
             //Debug.Log($"Removing child from:{ID}. Success?{s}. Mcontainer count:({mContainer.Count})");
             return s;
         }
@@ -126,44 +147,54 @@ public partial class OctTree<T>
             bool success = false;
             Bounds bounds = this.BoundingBox;
             Bounds objBounds = child.Bounds;
+#if DEBUG_OCTTREE
             Debug.Log($"CHecking node {this.ID}. Child Bound:{objBounds}");
+#endif
             if (bounds.size.sqrMagnitude > objBounds.size.sqrMagnitude)
             {
                 //Debug.Log(ID + "--- :" + bounds + "------ to check Centre:" + objBounds + ":" + mContainer.Count);
-                if (bounds.Contains(objBounds.center) && mContainer.Count < OctTree<T>.MAX_CONTAINER_SIZE)
+                if (bounds.Contains(objBounds.center) && mChildren.Count < OctTree<T>.MAX_CONTAINER_SIZE)
                 {
                     if (bounds.Intersects(objBounds))
                     {
-                        if (!InsertInChildNodes(child, out container))
+                        if (!InsertInLeafNodes(child, out container))
                         {
                             //if the object doesn't fit in any of the children then add it to this node's contaier
-                            //Debug.Log($"Adding child to {ID}");
+#if DEBUG_OCTTREE
+                            Debug.Log($"Adding child to {ID}");
+#endif
                             container = this;
-                            if (!mContainer.Contains(child)) mContainer.Add(child);
+                            if (!mChildren.Contains(child)) mChildren.Add(child);
                         }
                         success = true;
                     }
                     else
                     {
-                        Debug.LogWarning($"FAILED! in region:{ID}  bounds don't intersect or mContainer(count:{mContainer.Count}) already has the child.");
+#if DEBUG_OCTTREE
+                        Debug.LogWarning($"FAILED! in region:{ID}  bounds don't intersect or mContainer(count:{mChildren.Count}) already has the child.");
+#endif
                     }
                 }
                 else
                 {
-                    Debug.LogWarning($"FAILED! in region:{ID}. Either centree is outside bounds or mContainer(count:{mContainer.Count}) is full max capacity:{ OctTree<T>.MAX_CONTAINER_SIZE}.");
+#if DEBUG_OCTTREE
+                    Debug.LogWarning($"FAILED! in region:{ID}. Either centree is outside bounds or mContainer(count:{mChildren.Count}) is full max capacity:{ OctTree<T>.MAX_CONTAINER_SIZE}.");
+#endif
                 }
             }
             else
             {
+#if DEBUG_OCTTREE
                 Debug.LogWarning($"FAILED! in region:{ID}. bounds.size.sqrMagnitude > objBounds.size.sqrMagnitude:");
+#endif
             }
-            IsEmpty = (mContainer.Count < 1);
+            IsEmpty = (mChildren.Count < 1);
             return success;
         }
 
-        private bool InsertInChildNodes(ITreeChild child, out OctNode container)
+        private bool InsertInLeafNodes(ITreeChild child, out OctNode container)
         {
-            foreach (OctNode item in mChildNodes)
+            foreach (OctNode item in mLeafNodes)
             {
                 if (item != null)
                 {
@@ -177,26 +208,26 @@ public partial class OctTree<T>
             return false;
         }
 
-        private Vector3[] GetEdgeVerticesOfCube(Bounds bound)
-        {
-            if (mVertices == null)
-            {
-                Vector3 min = bound.min;
-                Vector3 max = bound.max;
-                Vector3 pairA1 = new Vector3(min.x, max.y, min.z);
-                Vector3 pairB1 = min;
-                Vector3 pairC1 = new Vector3(max.x, min.y, min.z);
-                Vector3 pairD1 = new Vector3(max.x, max.y, min.z);
+        //private Vector3[] GetEdgeVerticesOfCube(Bounds bound)
+        //{
+        //    if (mVertices == null)
+        //    {
+        //        Vector3 min = bound.min;
+        //        Vector3 max = bound.max;
+        //        Vector3 pairA1 = new Vector3(min.x, max.y, min.z);
+        //        Vector3 pairB1 = min;
+        //        Vector3 pairC1 = new Vector3(max.x, min.y, min.z);
+        //        Vector3 pairD1 = new Vector3(max.x, max.y, min.z);
 
-                Vector3 pairA2 = new Vector3(min.x, max.y, max.z);
-                Vector3 pairB2 = new Vector3(min.x, min.y, max.z);
-                Vector3 pairC2 = new Vector3(max.x, min.y, max.z);
-                Vector3 pairD2 = max;
+        //        Vector3 pairA2 = new Vector3(min.x, max.y, max.z);
+        //        Vector3 pairB2 = new Vector3(min.x, min.y, max.z);
+        //        Vector3 pairC2 = new Vector3(max.x, min.y, max.z);
+        //        Vector3 pairD2 = max;
 
-                mVertices = new Vector3[8] { pairA1, pairB1, pairC1, pairD1, pairA2, pairB2, pairC2, pairD2 };
-            }
-            return mVertices;
-        }
+        //        mVertices = new Vector3[8] { pairA1, pairB1, pairC1, pairD1, pairA2, pairB2, pairC2, pairD2 };
+        //    }
+        //    return mVertices;
+        //}
 
         private void SubDivideRegion(float smallestNodeSpan)
         {
@@ -205,15 +236,15 @@ public partial class OctTree<T>
             //Debug.Log($"Bounds.size:{ Bounds.size}, sqg mag:{Bounds.size.sqrMagnitude}, smallestSzie:{smallestSize}  sqrMag:{smallestSize.sqrMagnitude}");
             if (BoundingBox.size.sqrMagnitude <= smallestSize.sqrMagnitude) return;
 
-            Vector3[] vertices = GetEdgeVerticesOfCube(BoundingBox);
+            Vector3[] vertices = BoundingBox.GetEdgeVertices(); //GetEdgeVerticesOfCube(BoundingBox);
             for (int i = 0; i < OctTree<T>.MAX_LEAF_NODES; i++)
             {
                 if (i < vertices.Length)
                 {
                     Vector3 edge = vertices[i];
                     //Debug.Log($"index:{i}, edge:{ edge}, Bounds.center:{Bounds}");
-                    mChildNodes.Add(new OctNode(this, this.Centre, edge));
-                    mChildNodes[i].BuildLeafNodes(smallestNodeSpan);
+                    mLeafNodes.Add(new OctNode(this, this.Centre, edge));
+                    mLeafNodes[i].BuildLeafNodes(smallestNodeSpan);
                 }
             }
         }
