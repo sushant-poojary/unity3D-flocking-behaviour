@@ -68,12 +68,12 @@ public partial class OctTree<T>
             return mChildren.Contains(child);
         }
 
-        internal IEnumerable<OctNode> GetLeafNodes()
+        internal List<OctNode> GetLeafNodes()
         {
             return mLeafNodes;
         }
 
-        internal IEnumerable<ITreeChild> GetChildren()
+        internal List<ITreeChild> GetChildren()
         {
             return mChildren;
         }

@@ -13,7 +13,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1879581886640764, guid: 8a98dc7c3255b1f43b1885fecabf80f2, type: 3}
       propertyPath: m_Name
-      value: Eagle_Normal
+      value: Eagle_Normal Variant
       objectReference: {fileID: 0}
     - target: {fileID: 4350637029938684, guid: 8a98dc7c3255b1f43b1885fecabf80f2, type: 3}
       propertyPath: m_RootOrder
@@ -66,6 +66,22 @@ PrefabInstance:
     - target: {fileID: 137390508769849490, guid: 8a98dc7c3255b1f43b1885fecabf80f2, type: 3}
       propertyPath: m_Enabled
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 137390508769849490, guid: 8a98dc7c3255b1f43b1885fecabf80f2, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 137390508769849490, guid: 8a98dc7c3255b1f43b1885fecabf80f2, type: 3}
+      propertyPath: m_ReceiveShadows
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 137390508769849490, guid: 8a98dc7c3255b1f43b1885fecabf80f2, type: 3}
+      propertyPath: m_DynamicOccludee
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 137390508769849490, guid: 8a98dc7c3255b1f43b1885fecabf80f2, type: 3}
+      propertyPath: m_SkinnedMotionVectors
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 114337544043692620, guid: 8a98dc7c3255b1f43b1885fecabf80f2, type: 3}

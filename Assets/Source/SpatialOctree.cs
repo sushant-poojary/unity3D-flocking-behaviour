@@ -21,7 +21,7 @@ public class SpatialOctree : MonoBehaviour
     {
         //BoidObj = new Boid(Boid.gameObject);
         allRegionsColor = new List<Color>();
-        SpaceTree = new OctTree<Boid>(transform.position, 20, 3);
+        SpaceTree = new OctTree<Boid>(transform.position, 50, 4);
         mSpaceBounds = SpaceTree.GetRootArea();
         SpaceTree.BuildTree();
         allRegions = SpaceTree.GetAllRegions();

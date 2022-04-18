@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44657844, g: 0.49641222, b: 0.57481694, a: 1}
+  m_IndirectSpecularColor: {r: 0.37311992, g: 0.38074034, b: 0.35872713, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -154,7 +154,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   BirdPrefab: {fileID: 6276246821076110520, guid: ddfbbe0df2bf39c4abe842f5a399713f, type: 3}
   mSpatialTree: {fileID: 701972527}
-  NumberOfBirds: 10
+  NumberOfBirds: 600
+  minDistance: 3
 --- !u!4 &357585795
 Transform:
   m_ObjectHideFlags: 0
@@ -415,7 +416,7 @@ Light:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1398433207}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 10
   m_Type: 1
   m_Shape: 0
@@ -491,6 +492,14 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 449131818, guid: ddfbbe0df2bf39c4abe842f5a399713f, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 449131818, guid: ddfbbe0df2bf39c4abe842f5a399713f, type: 3}
+      propertyPath: m_IsTrigger
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6276246821076110520, guid: ddfbbe0df2bf39c4abe842f5a399713f, type: 3}
       propertyPath: m_Name
       value: Eagle
