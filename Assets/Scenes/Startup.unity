@@ -97,7 +97,7 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 0}
+  m_LightingDataAsset: {fileID: 112000000, guid: 4574ebecf370018489c2d331d5e9f7cb, type: 2}
   m_LightingSettings: {fileID: 0}
 --- !u!196 &4
 NavMeshSettings:
@@ -154,8 +154,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   BirdPrefab: {fileID: 6276246821076110520, guid: ddfbbe0df2bf39c4abe842f5a399713f, type: 3}
   mSpatialTree: {fileID: 701972527}
-  NumberOfBirds: 600
-  minDistance: 3
+  mBoidConfig:
+    AlignmentWeight: 1
+    CohesionWeight: 1
+    SeparationWeight: 1
+    MAX_SPEED: 6
+  NumberOfBirds: 100
+  minDistance: 2
 --- !u!4 &357585795
 Transform:
   m_ObjectHideFlags: 0

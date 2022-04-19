@@ -146,7 +146,7 @@ public partial class OctTree<T>
             container = null;
             bool success = false;
             Bounds bounds = this.BoundingBox;
-            Bounds objBounds = child.Bounds;
+            Bounds objBounds = child.GetBounds();
 #if DEBUG_OCTTREE
             Debug.Log($"CHecking node {this.ID}. Child Bound:{objBounds}");
 #endif

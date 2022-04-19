@@ -16,6 +16,8 @@ public partial class OctTree<T>
     private List<Bounds> mFlattenedRegions;
     //private List<OctNode> mFlattenedNonEmptyRegions = new List<OctNode>();
 
+    List<OctNode> flattenedNodes = new List<OctNode>();
+
     public OctTree(Vector3 centre, int span, int smallestSpaceSpan)
     {
         mRoot = new OctNode(centre, span);
@@ -26,7 +28,7 @@ public partial class OctTree<T>
     {
         return mRoot.BoundingBox;
     }
-    List<OctNode> flattenedNodes = new List<OctNode>();
+
     private List<OctNode> GetFlattenedNodes(OctNode startingNode)
     {
         if (startingNode == null)
@@ -119,7 +121,7 @@ public partial class OctTree<T>
         return false;
     }
 
-    public IEnumerable<ITreeChild> DebugFindNeighboringChildren(ITreeChild child, OctNode currentNode, float radius, out OctNode topNode)
+    public List<ITreeChild> DebugFindNeighboringChildren(ITreeChild child, OctNode currentNode, float radius, out OctNode topNode)
     {
         topNode = null;
         if (!currentNode.Contains(child)) throw new System.Exception($"child:{child} does not exist in current Node:{currentNode}");

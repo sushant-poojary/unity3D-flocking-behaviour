@@ -3,91 +3,105 @@ using UnityEngine;
 
 public class Boid : ITreeChild
 {
-    public const float MAX_SPEED = 3;
-    public const float MAX_SEPERATION_SPEED = 5;
-
-    public Bounds Bounds
+    //public const float MAX_SEPERATION_SPEED = 5;
+    private Bounds mStartingBounds;
+    public Bounds GetBounds()
     {
-        //get { return mCollider.bounds; }
-        get;
+        //Bounds bounds = mStartingBounds;
+        //bounds.center = mTransform.position;
+        return mCollider.bounds;
     }
 
     public OctTree<Boid>.OctNode ContainerNode { get; set; }
     public Vector3 Position => mTransform.position;
     public string ID { get; private set; }
+
+    private readonly BoidConfig mConfig;
     private SkinnedMeshRenderer mMeshRenderer;
     private BoxCollider mCollider;
     private Vector3 mVelocity;
     private GameObject mGameObject;
     private Transform mTransform;
-    public Boid(GameObject gameObject, string ID)
+    public Boid(GameObject gameObject, string ID, BoidConfig config)
     {
         this.ID = ID;
+        mConfig = config;
         mGameObject = gameObject;
         mTransform = mGameObject.transform;
         mMeshRenderer = mGameObject.GetComponentInChildren<SkinnedMeshRenderer>();
         mCollider = mGameObject.GetComponent<BoxCollider>();
-        Bounds = mCollider.bounds;
+        mStartingBounds = mCollider.bounds;
+        //Bounds = mCollider.bounds;
+        //Bounds = mCollider.bounds;
         mVelocity = new Vector3(UnityEngine.Random.Range(0.1f, 1f), 0, UnityEngine.Random.Range(0.1f, 1f));
     }
 
     public void Move(Vector3 alignmentSteering, Vector3 seperation, Vector3 cohension)
     {
-        /*
+
         if (alignmentSteering != Vector3.zero)
         {
-            alignmentSteering.Normalize();
-            //alignmentSteering *= MAX_SPEED;
+            alignmentSteering -= mVelocity;
+            //alignmentSteering.Normalize();
+            //alignmentSteering *= mConfig.MAX_SPEED;
             //alignmentSteering = alignmentSteering - mVelocity;
 
-            //if (alignmentSteering.sqrMagnitude > 2 * 2)
+            //if (alignmentSteering.sqrMagnitude > mConfig.MAX_SPEED * mConfig.MAX_SPEED)
             //{
 
             //    alignmentSteering.Normalize();
-            //    alignmentSteering *= MAX_SPEED;
+            //    alignmentSteering *= mConfig.MAX_SPEED;
             //}
-            //alignmentSteering *= 0.3f;
         }
 
         if (seperation != Vector3.zero)
         {
-            seperation.Normalize();
-            //seperation *= MAX_SEPERATION_SPEED;
-            //seperation = seperation - mVelocity;
-            //alignmentSteering = alignmentSteering - mVelocity;
+            //seperation.Normalize();
+            //seperation *= mConfig.MAX_SPEED;
+            //seperation -= mVelocity;
+            //if (seperation.sqrMagnitude > mConfig.MAX_SPEED * mConfig.MAX_SPEED)
+            //{
+
+            //    seperation.Normalize();
+            //    seperation *= mConfig.MAX_SPEED;
+            //}
         }
 
         if (cohension != Vector3.zero)
         {
-            //cohension = cohension - Position;
-            cohension.Normalize();
-            //cohension *= MAX_SPEED;
+            cohension -= Position;
+            //cohension.Normalize();
+            //cohension *= mConfig.MAX_SPEED;
             //cohension = cohension - mVelocity;
 
-            //if (cohension.sqrMagnitude > 2 * 2)
+            //if (cohension.sqrMagnitude > mConfig.MAX_SPEED * mConfig.MAX_SPEED)
             //{
 
             //    cohension.Normalize();
-            //    cohension *= MAX_SPEED;
+            //    cohension *= mConfig.MAX_SPEED;
             //}
-            //cohension *= 0.6f;
-            //alignmentSteering = alignmentSteering - mVelocity;
         }
+
+        seperation *= mConfig.SeparationWeight;  //Separation from each other
+        alignmentSteering *= mConfig.AlignmentWeight;   // to align all the objects in a particular direction
+        cohension *= mConfig.CohesionWeight;    //for grouping
+
+
         //Debug.Log($"alignmentSteering:{alignmentSteering}, seperation:{seperation}, cohension:{cohension}");
         mVelocity += (alignmentSteering + seperation + cohension);
-        if (mVelocity.sqrMagnitude > MAX_SPEED * MAX_SPEED)
-        {
-            mVelocity = mVelocity.normalized * MAX_SPEED;
-        }
         mVelocity.Normalize();
-        mVelocity *= 2.0f;
-        Vector3 prev = mTransform.position;
+        mVelocity *= mConfig.MAX_SPEED;
+        if (mVelocity.sqrMagnitude > mConfig.MAX_SPEED * mConfig.MAX_SPEED)
+        {
+            mVelocity = mVelocity.normalized * mConfig.MAX_SPEED;
+        }
+        //mVelocity.Normalize();
+        //Vector3 prev = mTransform.position;
         mTransform.position += (mVelocity * Time.deltaTime);
-        Vector3 dir = mTransform.position - prev;
+        //Vector3 dir = mTransform.position - prev;
         Vector3 newDirection = Vector3.RotateTowards(mTransform.forward, mVelocity, 0.5f, 1.0f);
         //Debug.DrawRay(mTransform.position, newDirection, Color.red);
         mTransform.rotation = Quaternion.LookRotation(newDirection);
-        */
     }
 
     public override string ToString()
@@ -100,13 +114,18 @@ public class Boid : ITreeChild
         return mVelocity;
     }
 
-    internal void ChangeVelocity(Vector3 vector)
-    {
-        mVelocity = vector;
-    }
+    //internal void ChangeVelocity(Vector3 vector)
+    //{
+    //    mVelocity = vector;
+    //}
 
     internal void ChangePosition(Vector3 position)
     {
         mTransform.position = position;
+    }
+
+    internal Vector3 GetForwardVector()
+    {
+        return mTransform.forward;
     }
 }
