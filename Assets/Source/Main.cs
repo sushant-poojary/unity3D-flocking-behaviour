@@ -17,7 +17,10 @@ public class Main : MonoBehaviour
     private int mBoidCount = 0;
     private OctTree<Boid>.OctNode topNode;
     private Bounds mSpaceBounds;
+    private List<ITreeChild> neighs;
 
+    [Range(-1,1)]
+    public float mFov = 0.5f;
     public float minDistance = 3f;
     public float awarenessRadius = 6;
     // Start is called before the first frame update
@@ -95,7 +98,7 @@ public class Main : MonoBehaviour
 
     //    return desired;
     //}
-    List<ITreeChild> neighs;
+
     // Update is called once per frame
     void Update()
     {
@@ -103,10 +106,10 @@ public class Main : MonoBehaviour
         for (int i = 0; i < mBoidCount; i++)
         {
             Boid boid = (Boid)mTreeChildren[i];
-            //neighs = mSpatialTree.SpaceTree.FindNeighboringChildren(boid, boid.ContainerNode, 2);
+            neighs = mSpatialTree.SpaceTree.FindNeighboringChildren(boid, boid.ContainerNode, 4);
             //neighs = mSpatialTree.SpaceTree.DebugFindNeighboringChildren(boid, boid.ContainerNode, 2, out topNode);
 
-            CalculateMovement(boid, ref mTreeChildren);
+            CalculateMovement(boid, ref neighs);
             //CalculateMovement(boid, ref mTreeChildren, ref cohensionCount, ref seperationCount, ref allignmentCount, ref alignment, ref seperation, ref cohension);
 
             //Debug.Log($"POS:{boid.Position}   mSpaceBounds:{ mSpaceBounds.min} and max{mSpaceBounds.max}");
@@ -197,57 +200,79 @@ public class Main : MonoBehaviour
                     cohension += position;
                     cohensionCount++;
                     float angle = Vector3.Dot(foward, difference.normalized);
-                    if (angle >= -0.5f)
+                    if (angle >= mFov)
                     {
                         alignment += ((Boid)neighbhor).GetCurrentVelocity();
                         alignmentCount++;
-
                     }
                 }
             }
         }
-
-
-        /*
-        for (int j = 0; j < mBoidCount; j++)
-        {
-            var neighbhor = mTreeChildren[j];
-            var position = neighbhor.Position;
-            if (neighbhor != boid)
-            {
-                var difference = boidPosition - position;
-                float angle = Vector3.Dot(fov, difference.normalized);
-                if (angle > 0.7f)
-                {
-                    var dist = difference.sqrMagnitude;
-                    //Debug.Log($"dist:{dist}, angle:{angle}");
-                    cohension += position;
-                    if (dist > 0 && dist < minDistance * minDistance)
-                    {
-                        seperation += difference;
-                        seperationCount++;
-                    }
-                    alignment += ((Boid)neighbhor).GetCurrentVelocity();
-                    count++;
-                }
-            }
-        }
-        */
 
         if (alignment != Vector3.zero)
         {
-            alignment = alignment / (float)alignmentCount;
+            alignment /= (float)alignmentCount;
         }
         if (cohension != Vector3.zero)
         {
             cohension /= (float)cohensionCount;
         }
-        //if (seperation != Vector3.zero)
-        //{
-        //    seperation = seperation / (float)seperationCount;
-        //    //seperation *= -1;
-        //}
+        if (seperation != Vector3.zero)
+        {
+            seperation /= (float)seperationCount;
+            //seperation *= -1;
+        }
         //Debug.Log($"alignment:{alignment}, cohension:{cohension}, seperation:{seperation} neighs.Count:{neighs.Count}");
+
+
+        if (alignment != Vector3.zero)
+        {
+            //alignment -= mVelocity;
+            alignment.Normalize();
+            //alignmentSteering *= mConfig.MAX_SPEED;
+            //alignmentSteering = alignmentSteering - mVelocity;
+
+            //if (alignmentSteering.sqrMagnitude > mConfig.MAX_SPEED * mConfig.MAX_SPEED)
+            //{
+
+            //    alignmentSteering.Normalize();
+            //    alignmentSteering *= mConfig.MAX_SPEED;
+            //}
+        }
+
+        if (seperation != Vector3.zero)
+        {
+            seperation.Normalize();
+            //seperation *= mConfig.MAX_SPEED;
+            //seperation -= mVelocity;
+            //if (seperation.sqrMagnitude > mConfig.MAX_SPEED * mConfig.MAX_SPEED)
+            //{
+
+            //    seperation.Normalize();
+            //    seperation *= mConfig.MAX_SPEED;
+            //}
+        }
+
+        if (cohension != Vector3.zero)
+        {
+            cohension -= boid.Position;
+            cohension.Normalize();
+            //cohension *= mConfig.MAX_SPEED;
+            //cohension = cohension - mVelocity;
+
+            //if (cohension.sqrMagnitude > mConfig.MAX_SPEED * mConfig.MAX_SPEED)
+            //{
+
+            //    cohension.Normalize();
+            //    cohension *= mConfig.MAX_SPEED;
+            //}
+        }
+
+        seperation *= mBoidConfig.SeparationWeight;  //Separation from each other
+        alignment *= mBoidConfig.AlignmentWeight;   // to align all the objects in a particular direction
+        cohension *= mBoidConfig.CohesionWeight;    //for grouping
+
+
         boid.Move(alignment, seperation, cohension);
     }
 

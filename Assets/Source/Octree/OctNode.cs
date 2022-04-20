@@ -207,7 +207,60 @@ public partial class OctTree<T>
             container = null;
             return false;
         }
+        /*
+        private bool InsertDynamic(ITreeChild child, out OctNode container)
+        {
+            container = null;
+            bool success = false;
+            Bounds bounds = this.BoundingBox;
 
+
+            Bounds objBounds = child.GetBounds();
+#if DEBUG_OCTTREE
+            Debug.Log($"CHecking node {this.ID}. Child Bound:{objBounds}");
+#endif
+            if (bounds.size.sqrMagnitude > objBounds.size.sqrMagnitude)
+            {
+                //Debug.Log(ID + "--- :" + bounds + "------ to check Centre:" + objBounds + ":" + mContainer.Count);
+                if (bounds.Contains(objBounds.center) && mChildren.Count < OctTree<T>.MAX_CONTAINER_SIZE)
+                {
+                    if (bounds.Intersects(objBounds))
+                    {
+                        if (!InsertInLeafNodes(child, out container))
+                        {
+                            //if the object doesn't fit in any of the children then add it to this node's contaier
+#if DEBUG_OCTTREE
+                            Debug.Log($"Adding child to {ID}");
+#endif
+                            container = this;
+                            if (!mChildren.Contains(child)) mChildren.Add(child);
+                        }
+                        success = true;
+                    }
+                    else
+                    {
+#if DEBUG_OCTTREE
+                        Debug.LogWarning($"FAILED! in region:{ID}  bounds don't intersect or mContainer(count:{mChildren.Count}) already has the child.");
+#endif
+                    }
+                }
+                else
+                {
+#if DEBUG_OCTTREE
+                    Debug.LogWarning($"FAILED! in region:{ID}. Either centree is outside bounds or mContainer(count:{mChildren.Count}) is full max capacity:{ OctTree<T>.MAX_CONTAINER_SIZE}.");
+#endif
+                }
+            }
+            else
+            {
+#if DEBUG_OCTTREE
+                Debug.LogWarning($"FAILED! in region:{ID}. bounds.size.sqrMagnitude > objBounds.size.sqrMagnitude:");
+#endif
+            }
+            IsEmpty = (mChildren.Count < 1);
+            return success;
+        }
+        */
         //private Vector3[] GetEdgeVerticesOfCube(Bounds bound)
         //{
         //    if (mVertices == null)

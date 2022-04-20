@@ -33,75 +33,36 @@ public class Boid : ITreeChild
         mStartingBounds = mCollider.bounds;
         //Bounds = mCollider.bounds;
         //Bounds = mCollider.bounds;
-        mVelocity = new Vector3(UnityEngine.Random.Range(0.1f, 1f), 0, UnityEngine.Random.Range(0.1f, 1f));
+        mVelocity = Vector3.zero;// new Vector3(UnityEngine.Random.Range(0.1f, 1f), 0, UnityEngine.Random.Range(0.1f, 1f));
     }
 
     public void Move(Vector3 alignmentSteering, Vector3 seperation, Vector3 cohension)
     {
-
-        if (alignmentSteering != Vector3.zero)
-        {
-            alignmentSteering -= mVelocity;
-            //alignmentSteering.Normalize();
-            //alignmentSteering *= mConfig.MAX_SPEED;
-            //alignmentSteering = alignmentSteering - mVelocity;
-
-            //if (alignmentSteering.sqrMagnitude > mConfig.MAX_SPEED * mConfig.MAX_SPEED)
-            //{
-
-            //    alignmentSteering.Normalize();
-            //    alignmentSteering *= mConfig.MAX_SPEED;
-            //}
-        }
-
-        if (seperation != Vector3.zero)
-        {
-            //seperation.Normalize();
-            //seperation *= mConfig.MAX_SPEED;
-            //seperation -= mVelocity;
-            //if (seperation.sqrMagnitude > mConfig.MAX_SPEED * mConfig.MAX_SPEED)
-            //{
-
-            //    seperation.Normalize();
-            //    seperation *= mConfig.MAX_SPEED;
-            //}
-        }
-
-        if (cohension != Vector3.zero)
-        {
-            cohension -= Position;
-            //cohension.Normalize();
-            //cohension *= mConfig.MAX_SPEED;
-            //cohension = cohension - mVelocity;
-
-            //if (cohension.sqrMagnitude > mConfig.MAX_SPEED * mConfig.MAX_SPEED)
-            //{
-
-            //    cohension.Normalize();
-            //    cohension *= mConfig.MAX_SPEED;
-            //}
-        }
-
-        seperation *= mConfig.SeparationWeight;  //Separation from each other
-        alignmentSteering *= mConfig.AlignmentWeight;   // to align all the objects in a particular direction
-        cohension *= mConfig.CohesionWeight;    //for grouping
-
-
         //Debug.Log($"alignmentSteering:{alignmentSteering}, seperation:{seperation}, cohension:{cohension}");
-        mVelocity += (alignmentSteering + seperation + cohension);
-        mVelocity.Normalize();
-        mVelocity *= mConfig.MAX_SPEED;
+
+        Vector3 direction = mConfig.Target.position -  Position;
+        Vector3 force = direction.normalized;
+        force *= mConfig.FollowTargetWeight;
+        force.x = 0;
+        force.z = 0;
+        //force.y = 0;
+        //force *= 4;
+        var vel = force + (alignmentSteering + seperation + cohension);
+        //vel.y = 0;
+        mVelocity += vel;
         if (mVelocity.sqrMagnitude > mConfig.MAX_SPEED * mConfig.MAX_SPEED)
         {
             mVelocity = mVelocity.normalized * mConfig.MAX_SPEED;
         }
         //mVelocity.Normalize();
-        //Vector3 prev = mTransform.position;
         mTransform.position += (mVelocity * Time.deltaTime);
-        //Vector3 dir = mTransform.position - prev;
-        Vector3 newDirection = Vector3.RotateTowards(mTransform.forward, mVelocity, 0.5f, 1.0f);
-        //Debug.DrawRay(mTransform.position, newDirection, Color.red);
-        mTransform.rotation = Quaternion.LookRotation(newDirection);
+        Vector3 newDirection = Vector3.RotateTowards(mTransform.forward, mVelocity, 5f * Time.deltaTime, 0.0f);
+        //Quaternion prevRotation = mTransform.rotation;
+        Debug.DrawRay(mTransform.position, newDirection, Color.red);
+
+        mTransform.rotation = Quaternion.LookRotation(newDirection);// Quaternion.Slerp(prevRotation, newDirection,);
+
+
     }
 
     public override string ToString()
