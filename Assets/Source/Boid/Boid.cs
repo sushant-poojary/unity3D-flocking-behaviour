@@ -40,11 +40,11 @@ public class Boid : ITreeChild
     {
         //Debug.Log($"alignmentSteering:{alignmentSteering}, seperation:{seperation}, cohension:{cohension}");
 
-        Vector3 direction = mConfig.Target.position -  Position;
+        Vector3 direction = mConfig.Target.position - Position;
         Vector3 force = direction.normalized;
         force *= mConfig.FollowTargetWeight;
-        force.x = 0;
-        force.z = 0;
+        force.x = 0.5f;
+        force.z = 0.5f;
         //force.y = 0;
         //force *= 4;
         var vel = force + (alignmentSteering + seperation + cohension);

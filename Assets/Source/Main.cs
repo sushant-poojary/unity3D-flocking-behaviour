@@ -8,24 +8,29 @@ public class Main : MonoBehaviour
     private const float BOUNDARY_BUFFER = 4;
     private bool mStartMovement;
     public GameObject BirdPrefab;
-    [SerializeField]
-    private SpatialOctree mSpatialTree;
+    //[SerializeField]
+    //private SpatialOctree mSpatialTree;
+
     [SerializeField]
     private BoidConfig mBoidConfig;
-    private List<ITreeChild> mTreeChildren;
+    private List<Boid> mTreeChildren;
     public int NumberOfBirds = 0;
+    private OctTree<Boid> mSpaceTree;
     private int mBoidCount = 0;
     private OctTree<Boid>.OctNode topNode;
     private Bounds mSpaceBounds;
-    private List<ITreeChild> neighs;
+    private List<Boid> neighs;
+    private List<Bounds> allRegions;
 
-    [Range(-1,1)]
+    [Range(-1, 1)]
     public float mFov = 0.5f;
     public float minDistance = 3f;
     public float awarenessRadius = 6;
     // Start is called before the first frame update
     void Start()
     {
+
+        mSpaceTree = new OctTree<Boid>(transform.position, 64, 2);
         mBoidCount = NumberOfBirds;
         StartCoroutine(GenerateBirds(mBoidCount));
 
@@ -34,8 +39,8 @@ public class Main : MonoBehaviour
 
     private IEnumerator GenerateBirds(int count)
     {
-        mSpaceBounds = mSpatialTree.SpaceTree.GetRootArea();
-        mTreeChildren = new List<ITreeChild>(count);
+        mSpaceBounds = mSpaceTree.GetRootArea();
+        mTreeChildren = new List<Boid>(count);
         var y = Random.Range(mSpaceBounds.min.y + BOUNDARY_BUFFER, mSpaceBounds.max.y - BOUNDARY_BUFFER);
         for (int i = 0; i < count; i++)
         {
@@ -54,16 +59,28 @@ public class Main : MonoBehaviour
             Vector3 randomPosition = new Vector3(x, y, z);
             bird.transform.position = randomPosition;
             //Physics.SyncTransforms();
-            OctTree<Boid>.OctNode container;
-            if (mSpatialTree.SpaceTree.Insert(boid, out container))
-            {
-                boid.ContainerNode = container;
-                //Debug.LogError("--------------------------[START]container: " + container.ID);
-            }
+            //OctTree<Boid>.OctNode container;
+            //if (mSpaceTree.Insert(boid, out container))
+            //{
+            //    boid.ContainerNode = container;
+            //    //Debug.LogError("--------------------------[START]container: " + container.ID);
+            //}
             yield return new WaitForEndOfFrame();
         }
+        List<OctTree<Boid>.OctNode> containers;
+        mSpaceTree.BuildTree(mTreeChildren, out containers);
+        foreach (var item in containers)
+        {
+            foreach (var boid in mTreeChildren)
+            {
+                if (item.Contains(boid))
+                {
+                    boid.ContainerNode = item;
+                }
+            }
+        }
+        allRegions = mSpaceTree.GetAllRegions();
         mTreeChildren.TrimExcess();
-        mStartMovement = true;
         //mStartMovement = true;
     }
 
@@ -106,8 +123,8 @@ public class Main : MonoBehaviour
         for (int i = 0; i < mBoidCount; i++)
         {
             Boid boid = (Boid)mTreeChildren[i];
-            neighs = mSpatialTree.SpaceTree.FindNeighboringChildren(boid, boid.ContainerNode, 4);
-            //neighs = mSpatialTree.SpaceTree.DebugFindNeighboringChildren(boid, boid.ContainerNode, 2, out topNode);
+            neighs = mSpaceTree.FindNeighboringChildren(boid, boid.ContainerNode, 4);
+            //neighs = mSpaceTree.DebugFindNeighboringChildren(boid, boid.ContainerNode, 2, out topNode);
 
             CalculateMovement(boid, ref neighs);
             //CalculateMovement(boid, ref mTreeChildren, ref cohensionCount, ref seperationCount, ref allignmentCount, ref alignment, ref seperation, ref cohension);
@@ -157,7 +174,7 @@ public class Main : MonoBehaviour
 
             OctTree<Boid>.OctNode container;
             //Debug.Log("Boid to bounds " + boid.GetBounds());
-            if (mSpatialTree.SpaceTree.Update(boid, boid.ContainerNode, out container))
+            if (mSpaceTree.Update(boid, boid.ContainerNode, out container))
             {
                 boid.ContainerNode = container;
                 //Debug.Log("GOT IT!!!      [Update] container: " + container.ID);
@@ -166,10 +183,12 @@ public class Main : MonoBehaviour
             {
                 //Debug.LogError("Failed to update " + boid + " from node:" + boid.ContainerNode);
             }
+
+            allRegions = mSpaceTree.GetAllRegions();
         }
     }
 
-    private void CalculateMovement(Boid boid, ref List<ITreeChild> neighs)
+    private void CalculateMovement(Boid boid, ref List<Boid> neighs)
     {
         int cohensionCount = 0;
         int seperationCount = 0;
@@ -182,7 +201,7 @@ public class Main : MonoBehaviour
         Vector3 foward = boid.GetForwardVector();
         for (int neighCount = 0; neighCount < length; neighCount++)
         {
-            ITreeChild neighbhor = neighs[neighCount];
+            Boid neighbhor = neighs[neighCount];
             Vector3 position = neighbhor.Position;
             if (neighbhor != boid)
             {
@@ -289,13 +308,17 @@ public class Main : MonoBehaviour
         if (GUILayout.Button(" FInd Neighbhors"))
         {
             var boid = (Boid)mTreeChildren[5];
-            var neighs = mSpatialTree.SpaceTree.DebugFindNeighboringChildren(boid, boid.ContainerNode, 2, out topNode);
+            var neighs = mSpaceTree.DebugFindNeighboringChildren(boid, boid.ContainerNode, 2, out topNode);
         }
     }
-    /*
+
     private void OnDrawGizmos()
     {
         Color originalColor = Gizmos.color;
+        if (mSpaceBounds.size != Vector3.zero)
+        {
+            Gizmos.DrawWireCube(mSpaceBounds.center, mSpaceBounds.size);
+        }
         if (mTreeChildren != null)
         {
             foreach (var item in mTreeChildren)
@@ -315,6 +338,20 @@ public class Main : MonoBehaviour
             }
         }
 
+        if (allRegions != null && allRegions.Count > 0)
+        {
+            for (int i = 0; i < allRegions.Count; i++)
+            {
+                var item = allRegions[i];
+
+                Gizmos.color = Color.black;
+                Gizmos.DrawSphere(item.center, 0.05f);
+                //Debug.Log("item:"+item+ " Size:"+item.size);
+                Gizmos.DrawWireCube(item.center, item.size);
+                Gizmos.color = originalColor;
+            }
+        }
+        /*
         if (mTreeChildren != null && mTreeChildren.Count > 0 && topNode != null)
         {
             Bounds bds = topNode.BoundingBox;
@@ -332,7 +369,6 @@ public class Main : MonoBehaviour
             //Gizmos.DrawCube(bounds.center, bounds.size);
             //Gizmos.color = originalColor;
         }
-    
+        */
     }
-    */
 }

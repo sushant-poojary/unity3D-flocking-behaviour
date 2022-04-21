@@ -171,7 +171,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   BirdPrefab: {fileID: 6276246821076110520, guid: ddfbbe0df2bf39c4abe842f5a399713f, type: 3}
-  mSpatialTree: {fileID: 701972527}
   mBoidConfig:
     AlignmentWeight: 1
     CohesionWeight: 1
@@ -179,7 +178,7 @@ MonoBehaviour:
     MAX_SPEED: 6
     FollowTargetWeight: 1
     Target: {fileID: 2044800112}
-  NumberOfBirds: 300
+  NumberOfBirds: 1
   mFov: 0.2
   minDistance: 4
   awarenessRadius: 6
@@ -213,7 +212,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &701972526
 Transform:
   m_ObjectHideFlags: 0
@@ -235,7 +234,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 701972525}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 80771e3dd896c4742aa5c1d8f9a44451, type: 3}
   m_Name: 
