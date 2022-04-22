@@ -8,8 +8,8 @@ public class Boid : ITreeChild
     public Bounds GetBounds()
     {
         //Bounds bounds = mStartingBounds;
-        //bounds.center = mTransform.position;
-        return mCollider.bounds;
+        mStartingBounds.center = mTransform.position;
+        return mStartingBounds;
     }
 
     public OctTree<Boid>.OctNode ContainerNode { get; set; }
@@ -31,6 +31,7 @@ public class Boid : ITreeChild
         mMeshRenderer = mGameObject.GetComponentInChildren<SkinnedMeshRenderer>();
         mCollider = mGameObject.GetComponent<BoxCollider>();
         mStartingBounds = mCollider.bounds;
+        mCollider.enabled = false;
         //Bounds = mCollider.bounds;
         //Bounds = mCollider.bounds;
         mVelocity = Vector3.zero;// new Vector3(UnityEngine.Random.Range(0.1f, 1f), 0, UnityEngine.Random.Range(0.1f, 1f));

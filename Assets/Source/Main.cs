@@ -139,7 +139,7 @@ public class Main : MonoBehaviour
         for (int i = 0; i < mBoidCount; i++)
         {
             Boid boid = (Boid)mTreeChildren[i];
-            neighs = mSpaceTree.FindNeighboringChildren(boid, boid.ContainerNode, 4);
+            neighs = mSpaceTree.FindNeighboringChildren(boid, boid.ContainerNode, 2);
             //neighs = mSpaceTree.DebugFindNeighboringChildren(boid, boid.ContainerNode, 2, out topNode);
 
             CalculateMovement(boid, ref neighs);

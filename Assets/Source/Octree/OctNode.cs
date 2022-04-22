@@ -27,12 +27,35 @@ public partial class OctTree<T> where T : ITreeChild
     [Serializable]
     public class OctNode : IOctNode
     {
+        private string mGUID;
+        private string mName;
+
         public Bounds BoundingBox { get; private set; }
         public Vector3 Centre { get; private set; }
         public OctNode Parent { get; private set; }
         public bool IsEmpty { get; private set; }
-        public string NAME { get; private set; }
-        public string GUID { get; private set; }
+        public string NAME
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(mName))
+                {
+                    mName = (Parent == null) ? $"root->[{BoundingBox.center} X {BoundingBox.extents}]" : $"{Parent.NAME}->[{BoundingBox.center} X {BoundingBox.extents}]";
+                }
+                return mName;
+            }
+        }
+        public string GUID
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(mGUID))
+                {
+                    mGUID = BoundingBox.GetHashCode().ToString();
+                }
+                return mGUID;
+            } 
+        }
 
         Bounds IOctNode.BoundingBox => this.BoundingBox;
         Vector3 IOctNode.Centre => this.Centre;
@@ -101,8 +124,8 @@ public partial class OctTree<T> where T : ITreeChild
             IsEmpty = true;
             IsActive = false;
             mIndex = index;
-            NAME = (parent == null) ? $"root->[{area.center} X {area.extents}]" : $"{parent.NAME}->[{area.center} X {area.extents}]";
-            GUID = NAME.GetHashCode().ToString();
+            //NAME = (parent == null) ? $"root->[{area.center} X {area.extents}]" : $"{parent.NAME}->[{area.center} X {area.extents}]";
+            //GUID = area.GetHashCode().ToString();
         }
 
         private void Initialize(Bounds area, Vector3Int index, OctNode parent = null)
@@ -114,8 +137,8 @@ public partial class OctTree<T> where T : ITreeChild
             IsEmpty = true;
             IsActive = false;
             Index = index;
-            NAME = (parent == null) ? $"root->[{area.center} X {area.extents}]" : $"{parent.NAME}->[{area.center} X {area.extents}]";
-            GUID = NAME.GetHashCode().ToString();
+            //NAME = (parent == null) ? $"root->[{area.center} X {area.extents}]" : $"{parent.NAME}->[{area.center} X {area.extents}]";
+            //GUID = area.GetHashCode().ToString();
         }
 
         internal bool Contains(T child)
