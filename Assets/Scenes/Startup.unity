@@ -170,7 +170,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6fc229cb7757ad44db496b069386996b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  interval: 4
   BirdPrefab: {fileID: 6276246821076110520, guid: ddfbbe0df2bf39c4abe842f5a399713f, type: 3}
   mBoidConfig:
     AlignmentWeight: 1
@@ -179,7 +178,7 @@ MonoBehaviour:
     MAX_SPEED: 6
     FollowTargetWeight: 1
     Target: {fileID: 2044800112}
-  NumberOfBirds: 1000
+  NumberOfBirds: 300
   mFov: 0.2
   minDistance: 4
   awarenessRadius: 6

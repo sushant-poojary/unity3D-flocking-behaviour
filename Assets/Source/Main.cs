@@ -7,6 +7,7 @@ public class Main : MonoBehaviour
 {
     private const float BOUNDARY_BUFFER = 4;
     public const int interval = 4;
+    public const int doubleInterval = interval * 2;
     private bool mStartMovement;
     public GameObject BirdPrefab;
     //[SerializeField]
@@ -206,8 +207,12 @@ public class Main : MonoBehaviour
                 {
                     //Debug.LogError("Failed to update " + boid + " from node:" + boid.ContainerNode);
                 }
-                mSpaceTree.Prune();
+               
                 //allRegions = mSpaceTree.GetAllRegions();
+            }
+            if (Time.frameCount % doubleInterval == 0)
+            {
+                mSpaceTree.Prune();
             }
             //allRegions = mSpaceTree.GetAllRegions();
         }

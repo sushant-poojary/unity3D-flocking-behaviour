@@ -550,7 +550,7 @@ public partial class OctTree<T> where T : ITreeChild
 
         private bool Prune(OctNode node)
         {
-            bool isDead = node.mChildren.Count < 1 && node.IsActive;
+            bool isDead = node.mChildren.Count < 1 && !node.IsActive;
             if (!isDead)
             {
                 var length = node.mLeafNodes.Length;
