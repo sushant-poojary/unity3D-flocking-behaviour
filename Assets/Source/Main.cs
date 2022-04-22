@@ -184,7 +184,7 @@ public class Main : MonoBehaviour
                 //Debug.LogError("Failed to update " + boid + " from node:" + boid.ContainerNode);
             }
             mSpaceTree.Prune();
-            allRegions = mSpaceTree.GetAllRegions();
+            //allRegions = mSpaceTree.GetAllRegions();
         }
     }
 

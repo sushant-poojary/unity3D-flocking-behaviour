@@ -44,20 +44,18 @@ public partial class OctTree<T> where T : ITreeChild
         while (count < nodesToScan && count < MAX_LOOP)
         {
             IOctNode node = flattenedNodes[count];
-            List<OctNode> children = node.GetLeafNodes();
-            //int length = children.Count;
-            flattenedNodes.AddRange(children);
-            nodesToScan += children.Count;
-            //for (int i = 0; i < length; i++)
-            //{
-            //    flattenedNodes.Add(children[i]);
-            //    nodesToScan++;
-            //}
-            //foreach (OctNode item in children)
-            //{
-            //    flattenedNodes.Add(item);
-            //    nodesToScan++;
-            //}
+            OctNode[] children = node.GetLeafNodes();
+            int length = children.Length;
+            //flattenedNodes.AddRange(children);
+            for (int i = 0; i < length; i++)
+            {
+                OctNode leaf = children[i];
+                if (leaf != null && leaf.IsActive)
+                {
+                    flattenedNodes.Add(leaf);
+                    nodesToScan++;
+                }
+            }
             count++;
         }
         //flattenedNodes.TrimExcess();
@@ -77,12 +75,24 @@ public partial class OctTree<T> where T : ITreeChild
         {
             OctNode node = flattenedNodes[count];
             flattenedBounds.Add(node.BoundingBox);
-            List<OctNode> children = ((IOctNode)node).GetLeafNodes();
-            int length = children.Count;
+            //List<OctNode> children = ((IOctNode)node).GetLeafNodes();
+            //int length = children.Count;
+            //for (int i = 0; i < length; i++)
+            //{
+            //    flattenedNodes.Add(children[i]);
+            //    nodesToScan++;
+            //}
+            OctNode[] children =  ((IOctNode)node).GetLeafNodes();
+            int length = children.Length;
+            //flattenedNodes.AddRange(children);
             for (int i = 0; i < length; i++)
             {
-                flattenedNodes.Add(children[i]);
-                nodesToScan++;
+                OctNode leaf = children[i];
+                if (leaf != null && leaf.IsActive)
+                {
+                    flattenedNodes.Add(leaf);
+                    nodesToScan++;
+                }
             }
             //foreach (OctNode item in children)
             //{
@@ -164,15 +174,16 @@ public partial class OctTree<T> where T : ITreeChild
 
     public void Prune()
     {
-        Prune(mRoot);
+        mRoot.Prune();
+        //Prune(mRoot);
     }
-
+    /*
     private bool Prune(IOctNode node)
     {
         bool isDead = (node.IsEmpty && !node.HasLeafNodes());
         if (!isDead)
         {
-            if (node.IsEmpty && !node.HasLeafNodes()) return true;
+            //if (node.IsEmpty && !node.HasLeafNodes()) return true;
             var leafNodes = node.GetLeafNodes();
             var length = leafNodes.Count;
             var pruned = 0;
@@ -181,18 +192,19 @@ public partial class OctTree<T> where T : ITreeChild
                 var leaf = leafNodes[i];
                 if (Prune(leaf))
                 {
-                    if (node.Prune(leaf))
-                    {
-                        length--;
-                        pruned++;
-                    }
+                    leaf.MarkInactive();
+                    //if (node.Prune(leaf))
+                    //{
+                    //    length--;
+                    //    pruned++;
+                    //}
                 }
             }
             isDead = (node.IsEmpty && !node.HasLeafNodes());
         }
         return isDead;
     }
-
+    */
     public List<T> DebugFindNeighboringChildren(T child, OctNode currentNode, float radius, out OctNode topNode)
     {
         topNode = null;

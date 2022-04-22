@@ -9,10 +9,10 @@ public partial class OctTree<T> where T : ITreeChild
         bool Insert(T gameObject, out OctNode container);
         bool InsertDynamic(T gameObject, float smallestNodeSpan, out OctNode container);
         void BuildLeafNodes(List<T> treeChildren, float smallestNodeSpan, out List<OctNode> nodes);
-        List<OctNode> GetLeafNodes();
+        OctNode[] GetLeafNodes();
         List<T> GetChildren();
         bool RemoveChild(T child);
-        bool Prune(OctNode toRemove);
+        bool Prune();
         bool HasLeafNodes();
         Bounds BoundingBox { get; }
         Vector3 Centre { get; }
@@ -20,6 +20,7 @@ public partial class OctTree<T> where T : ITreeChild
         bool IsEmpty { get; }
         string NAME { get; }
         string GUID { get; }
+        bool IsActive { get; }
     }
 
     [Serializable]
@@ -38,6 +39,8 @@ public partial class OctTree<T> where T : ITreeChild
         bool IOctNode.IsEmpty => this.IsEmpty;
         string IOctNode.NAME => this.NAME;
         string IOctNode.GUID => this.GUID;
+        bool IOctNode.IsActive => this.IsActive;
+        public bool IsActive { get; private set; }
 
         private int mIndex;
         private Vector3[] mVertices;
@@ -90,6 +93,7 @@ public partial class OctTree<T> where T : ITreeChild
             Parent = parent;
             mNodesUpdated = false;
             IsEmpty = true;
+            IsActive = false;
             mIndex = index;
             NAME = (parent == null) ? $"root->[{area.center} X {area.extents}]" : $"{parent.NAME}->[{area.center} X {area.extents}]";
             GUID = NAME.GetHashCode().ToString();
@@ -100,9 +104,9 @@ public partial class OctTree<T> where T : ITreeChild
             return mChildren.Contains(child);
         }
 
-        List<OctNode> IOctNode.GetLeafNodes()
+        OctNode[] IOctNode.GetLeafNodes()
         {
-            return mDynamicLeafNodes;
+            return mLeafNodes;
         }
 
         List<T> IOctNode.GetChildren()
@@ -119,6 +123,11 @@ public partial class OctTree<T> where T : ITreeChild
                 return currentNodeBounds.ContainBounds(childBound);
             }
             return false;
+        }
+
+        internal void MarkInactive()
+        {
+            IsActive = false;
         }
 
         //internal List<Bounds> GetChildRegions()
@@ -182,20 +191,20 @@ public partial class OctTree<T> where T : ITreeChild
             return s;
         }
 
-        bool IOctNode.Prune(OctNode leaf)
-        {
-            if (leaf.IsEmpty)
-            {
-                mLeafNodes[leaf.mIndex] = null;
-                bool s = mDynamicLeafNodes.Remove(leaf);
-                //IsEmpty = (mChildren.Count < 1);
-#if DEBUG_OCTTREE
-                Debug.Log($"Removing leaf:{leaf.GUID} from parent:{GUID}. Success?{s}. mDynamicLeafNodes count:({mDynamicLeafNodes.Count})");
-#endif
-                return s;
-            }
-            return false;
-        }
+        //        bool IOctNode.Prune(OctNode leaf)
+        //        {
+        //            if (leaf.IsEmpty)
+        //            {
+        //                //mLeafNodes[leaf.mIndex] = null;
+        //                bool s = mDynamicLeafNodes.Remove(leaf);
+        //                //IsEmpty = (mChildren.Count < 1);
+        //#if DEBUG_OCTTREE
+        //                Debug.Log($"Removing leaf:{leaf.GUID} from parent:{GUID}. Success?{s}. mDynamicLeafNodes count:({mDynamicLeafNodes.Count})");
+        //#endif
+        //                return s;
+        //            }
+        //            return false;
+        //        }
 
         private bool Insert(T child, out OctNode container)
         {
@@ -268,6 +277,7 @@ public partial class OctTree<T> where T : ITreeChild
         {
             container = null;
             bool success = false;
+            bool insertedInLeadNode = false;
             Bounds bounds = this.BoundingBox;
             Bounds objBounds = child.GetBounds();
 #if DEBUG_OCTTREE
@@ -299,7 +309,6 @@ public partial class OctTree<T> where T : ITreeChild
                                 Vector3[] edges = bounds.GetEdgeVertices();
                                 int length = edges.Length;
                                 Bounds[] octants = new Bounds[length];
-                                bool insertedInLeadNode = false;
                                 for (int i = 0; i < length; i++)
                                 {
                                     var octantRegion = GetOctant(this.Centre, edges[i]);
@@ -374,6 +383,7 @@ public partial class OctTree<T> where T : ITreeChild
             }
 #endif
             IsEmpty = (mChildren.Count < 1);
+            IsActive = !IsEmpty || insertedInLeadNode;
             return success;
         }
 
@@ -464,7 +474,33 @@ public partial class OctTree<T> where T : ITreeChild
 
         public bool HasLeafNodes()
         {
-            return (mDynamicLeafNodes.Count > 0);
+            throw new NotImplementedException();
+        }
+
+        public bool Prune()
+        {
+            return Prune(this);
+        }
+
+        private bool Prune(OctNode node)
+        {
+            bool isDead = node.mChildren.Count < 1 && node.IsActive;
+            if (!isDead)
+            {
+                var length = node.mLeafNodes.Length;
+                var pruned = 0;
+                for (int i = 0; i < length; i++)
+                {
+                    var leaf = node.mLeafNodes[i];
+                    if (leaf != null && Prune(leaf))
+                    {
+                        leaf.MarkInactive();
+                        pruned++;
+                    }
+                }
+                isDead = (node.mChildren.Count < 1 && (pruned == length -1));
+            }
+            return isDead;
         }
     }
 }
