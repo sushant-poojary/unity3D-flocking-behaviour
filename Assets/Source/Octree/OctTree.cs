@@ -82,7 +82,7 @@ public partial class OctTree<T> where T : ITreeChild
             //    flattenedNodes.Add(children[i]);
             //    nodesToScan++;
             //}
-            OctNode[] children =  ((IOctNode)node).GetLeafNodes();
+            OctNode[] children = ((IOctNode)node).GetLeafNodes();
             int length = children.Length;
             //flattenedNodes.AddRange(children);
             for (int i = 0; i < length; i++)
@@ -131,12 +131,7 @@ public partial class OctTree<T> where T : ITreeChild
 
     public void BuildTree(List<T> treeChildren, out List<OctNode> nodes)
     {
-        ((IOctNode)mRoot).BuildLeafNodes(treeChildren, MinSpaceSpan, out nodes);
-        mFlattenedRegions = new List<Bounds>(nodes.Count);
-        foreach (var item in nodes)
-        {
-            mFlattenedRegions.Add(item.BoundingBox);
-        }
+        ((IOctNode)mRoot).BuildLeafNodes(treeChildren, MinSpaceSpan, mRoot.BoundingBox.size, out nodes);
     }
 
     public bool Insert(T gameObject, out OctNode node)
@@ -147,9 +142,13 @@ public partial class OctTree<T> where T : ITreeChild
     public bool Update(T child, OctTree<T>.OctNode currentNode, out OctTree<T>.OctNode newNode)
     {
         newNode = null;
-        if (!currentNode.Contains(child)) throw new System.Exception($"child:{child} does not exist in current Node:{currentNode.GUID}");
+        if(currentNode == null) throw new ArgumentNullException(nameof(currentNode));
+        if(child == null) throw new ArgumentNullException(nameof(child));
+        if (!currentNode.Contains(child))
+            throw new System.Exception($"child:{child} does not exist in current Node:{currentNode.GUID}");
         OctTree<T>.OctNode nodeToInsertIn;
-        OctTree<T>.OctNode parentToPrune = currentNode.Parent;
+        //OctTree<T>.OctNode parentToPrune = currentNode.Parent;
+        Vector3 dimension = GetRootArea().size;
         nodeToInsertIn = currentNode.Parent;
         if (nodeToInsertIn == null) nodeToInsertIn = mRoot;
         while (nodeToInsertIn != null)

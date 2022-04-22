@@ -76,12 +76,21 @@ public class Main : MonoBehaviour
                 if (item.Contains(boid))
                 {
                     boid.ContainerNode = item;
+                    break;
                 }
             }
         }
+        foreach (var boid in mTreeChildren)
+        {
+            if (boid.ContainerNode == null)
+            {
+                Debug.Log("Boids have no containers:"+boid.ID);
+            }
+        }
+
         allRegions = mSpaceTree.GetAllRegions();
         mTreeChildren.TrimExcess();
-        mStartMovement = true;
+        //mStartMovement = true;
     }
 
     //private void GetSeperation()
@@ -176,6 +185,10 @@ public class Main : MonoBehaviour
             //Debug.Log("Boid to bounds " + boid.GetBounds());
             if (mSpaceTree.Update(boid, boid.ContainerNode, out container))
             {
+                if (container == null)
+                {
+                    Debug.LogWarning("Container is null for boid at prev:" + boid.ContainerNode.GUID);
+                }
                 boid.ContainerNode = container;
                 //Debug.Log("GOT IT!!!      [Update] container: " + container.NAME);
             }
