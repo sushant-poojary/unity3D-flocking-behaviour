@@ -54,7 +54,7 @@ public partial class OctTree<T> where T : ITreeChild
                     mGUID = BoundingBox.GetHashCode().ToString();
                 }
                 return mGUID;
-            } 
+            }
         }
 
         Bounds IOctNode.BoundingBox => this.BoundingBox;
@@ -346,35 +346,7 @@ public partial class OctTree<T> where T : ITreeChild
                         {
                             if (!mChildren.Contains(child))
                             {
-                                //the order of elements which GetEdgeVertices() returns is imporant.
-                                //because the insert leaf nodes in the exact same order / same index.
-                                Vector3[] edges = null;
-                                int length = mLeafNodes.Length;
-                                //Bounds[] octants = new Bounds[length];
-                                for (int i = 0; i < length; i++)
-                                {
-                                    if (!insertedInLeadNode)
-                                    {
-                                        OctNode leaf = mLeafNodes[i];
-                                        if (leaf == null)
-                                        {
-                                            if (edges == null) edges = bounds.GetEdgeVertices();
-                                            Bounds octantRegion = GetOctant(this.Centre, edges[i]);
-                                            if (octantRegion.Contains(objBounds.center))
-                                            {
-                                                Vector3Int index = Vector3Int.RoundToInt(octantRegion.center);
-                                                leaf = new OctNode(this, octantRegion, index);
-                                                //mLeafNodes.Add(leaf);
-                                                mLeafNodes[i] = leaf;
-                                                insertedInLeadNode = leaf.InsertDynamic(child, smallestNodeSpan, out container);
-                                            }
-                                        }
-                                        else
-                                        {
-                                            insertedInLeadNode = leaf.InsertDynamic(child, smallestNodeSpan, out container);
-                                        }
-                                    }
-                                }
+                                insertedInLeadNode = TryInsertChildInLeafNodes(child, smallestNodeSpan, ref bounds, ref objBounds, out container);
 
                                 if (!insertedInLeadNode)
                                 {
@@ -439,6 +411,42 @@ public partial class OctTree<T> where T : ITreeChild
             IsEmpty = (mChildren.Count < 1);
             IsActive = !IsEmpty || insertedInLeadNode;
             return success;
+        }
+        private bool TryInsertChildInLeafNodes(T child, float smallestNodeSpan, ref Bounds bounds, ref Bounds objBounds, out OctNode container)
+        {
+            container = null;
+            bool insertedInLeadNode = false;
+            //the order of elements which GetEdgeVertices() returns is imporant.
+            //because the insert leaf nodes in the exact same order / same index.
+            
+            int length = mLeafNodes.Length;
+            //Bounds[] octants = new Bounds[length];
+            for (int i = 0; i < length; i++)
+            {
+                OctNode leaf = mLeafNodes[i];
+                if (leaf == null)
+                {
+                    if (mVertices == null) mVertices = bounds.GetEdgeVertices();
+                    Bounds octantRegion = GetOctant(this.Centre, mVertices[i]);
+                    if (octantRegion.Contains(objBounds.center))
+                    {
+                        Vector3Int index = Vector3Int.RoundToInt(octantRegion.center);
+                        leaf = new OctNode(this, octantRegion, index);
+                        //mLeafNodes.Add(leaf);
+                        mLeafNodes[i] = leaf;
+                        insertedInLeadNode = leaf.InsertDynamic(child, smallestNodeSpan, out container);
+                    }
+                }
+                else
+                {
+                    insertedInLeadNode = leaf.InsertDynamic(child, smallestNodeSpan, out container);
+                }
+                if (insertedInLeadNode)
+                {
+                    return insertedInLeadNode;
+                }
+            }
+            return insertedInLeadNode;
         }
 
         //private Vector3[] GetEdgeVerticesOfCube(Bounds bound)

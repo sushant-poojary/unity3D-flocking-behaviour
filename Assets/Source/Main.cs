@@ -6,6 +6,7 @@ using UnityEngine;
 public class Main : MonoBehaviour
 {
     private const float BOUNDARY_BUFFER = 4;
+    public const int interval = 4;
     private bool mStartMovement;
     public GameObject BirdPrefab;
     //[SerializeField]
@@ -188,22 +189,26 @@ public class Main : MonoBehaviour
                 boid.ChangePosition(currentPos);
             }
 
-            OctTree<Boid>.OctNode container;
-            //Debug.Log("Boid to bounds " + boid.GetBounds());
-            if (mSpaceTree.Update(boid, boid.ContainerNode, out container))
+            if (Time.frameCount % interval == 0)
             {
-                if (container == null)
+                OctTree<Boid>.OctNode container;
+                //Debug.Log("Boid to bounds " + boid.GetBounds());
+                if (mSpaceTree.Update(boid, boid.ContainerNode, out container))
                 {
-                    Debug.LogWarning("Container is null for boid at prev:" + boid.ContainerNode.GUID);
+                    if (container == null)
+                    {
+                        Debug.LogWarning("Container is null for boid at prev:" + boid.ContainerNode.GUID);
+                    }
+                    boid.ContainerNode = container;
+                    //Debug.Log("GOT IT!!!      [Update] container: " + container.NAME);
                 }
-                boid.ContainerNode = container;
-                //Debug.Log("GOT IT!!!      [Update] container: " + container.NAME);
+                else
+                {
+                    //Debug.LogError("Failed to update " + boid + " from node:" + boid.ContainerNode);
+                }
+                mSpaceTree.Prune();
+                //allRegions = mSpaceTree.GetAllRegions();
             }
-            else
-            {
-                //Debug.LogError("Failed to update " + boid + " from node:" + boid.ContainerNode);
-            }
-            mSpaceTree.Prune();
             //allRegions = mSpaceTree.GetAllRegions();
         }
     }
