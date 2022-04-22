@@ -66,7 +66,33 @@ public partial class OctTree<T> where T : ITreeChild
 
     public List<Bounds> GetAllRegions()
     {
-        return mFlattenedRegions;
+        OctNode startingNode = mRoot;
+        List<OctNode> flattenedNodes = new List<OctNode>();
+        flattenedNodes.Add(startingNode);
+        int count = 0;
+        int nodesToScan = flattenedNodes.Count;
+        const int MAX_LOOP = 1000;
+        List<Bounds> flattenedBounds = new List<Bounds>();
+        while (count < nodesToScan && count < MAX_LOOP)
+        {
+            OctNode node = flattenedNodes[count];
+            flattenedBounds.Add(node.BoundingBox);
+            List<OctNode> children = ((IOctNode)node).GetLeafNodes();
+            int length = children.Count;
+            for (int i = 0; i < length; i++)
+            {
+                flattenedNodes.Add(children[i]);
+                nodesToScan++;
+            }
+            //foreach (OctNode item in children)
+            //{
+            //    flattenedNodes.Add(item);
+            //    nodesToScan++;
+            //}
+            count++;
+        }
+        //flattenedNodes.TrimExcess();
+        return flattenedBounds;
     }
 
     //public List<OctNode> GetNonEmptyRegions()
@@ -111,7 +137,7 @@ public partial class OctTree<T> where T : ITreeChild
     public bool Update(T child, OctTree<T>.OctNode currentNode, out OctTree<T>.OctNode newNode)
     {
         newNode = null;
-        if (!currentNode.Contains(child)) throw new System.Exception($"child:{child} does not exist in current Node:{currentNode.ID}");
+        if (!currentNode.Contains(child)) throw new System.Exception($"child:{child} does not exist in current Node:{currentNode.GUID}");
         OctTree<T>.OctNode nodeToInsertIn;
         OctTree<T>.OctNode parentToPrune = currentNode.Parent;
         nodeToInsertIn = currentNode.Parent;
@@ -123,9 +149,10 @@ public partial class OctTree<T> where T : ITreeChild
                 if (newNode != currentNode)
                 {
                     bool s = ((IOctNode)currentNode).RemoveChild(child);
-                    ((IOctNode)parentToPrune).Prune(currentNode);
+                    //((IOctNode)parentToPrune).Prune(currentNode);
                 }
                 nodeToInsertIn = null;
+                return true;
             }
             else
             {
@@ -135,6 +162,37 @@ public partial class OctTree<T> where T : ITreeChild
         return false;
     }
 
+    public void Prune()
+    {
+        Prune(mRoot);
+    }
+
+    private bool Prune(IOctNode node)
+    {
+        bool isDead = (node.IsEmpty && !node.HasLeafNodes());
+        if (!isDead)
+        {
+            if (node.IsEmpty && !node.HasLeafNodes()) return true;
+            var leafNodes = node.GetLeafNodes();
+            var length = leafNodes.Count;
+            var pruned = 0;
+            for (int i = 0; i < length; i++)
+            {
+                var leaf = leafNodes[i];
+                if (Prune(leaf))
+                {
+                    if (node.Prune(leaf))
+                    {
+                        length--;
+                        pruned++;
+                    }
+                }
+            }
+            isDead = (node.IsEmpty && !node.HasLeafNodes());
+        }
+        return isDead;
+    }
+
     public List<T> DebugFindNeighboringChildren(T child, OctNode currentNode, float radius, out OctNode topNode)
     {
         topNode = null;
@@ -142,7 +200,7 @@ public partial class OctTree<T> where T : ITreeChild
         Bounds bounds = new Bounds(child.Position, new Vector3(radius, radius, radius));
         OctNode containingNode = GetNodeContaining(bounds, currentNode);
         topNode = containingNode;
-        Debug.Log($"[FindNeighboringChildren] getting children from node:{containingNode.ID}");
+        Debug.Log($"[FindNeighboringChildren] getting children from node:{containingNode.NAME}");
         List<OctNode> allLeadNodes = GetFlattenedNodes(containingNode);
         List<T> children = new List<T>(allLeadNodes.Count * OctTree<T>.MAX_CONTAINER_SIZE);
         foreach (OctNode item in allLeadNodes)
@@ -162,7 +220,7 @@ public partial class OctTree<T> where T : ITreeChild
         children.Clear();
         OctNode containingNode = GetNodeContaining(bounds, currentNode);
         if (containingNode == null) return children;
-        //Debug.Log($"[FindNeighboringChildren] getting children from node:{containingNode.ID}");
+        //Debug.Log($"[FindNeighboringChildren] getting children from node:{containingNode.NAME}");
         List<OctNode> allLeadNodes = GetFlattenedNodes(containingNode);
         //List<ITreeChild> children = new List<ITreeChild>(allLeadNodes.Count);
         int length = allLeadNodes.Count;

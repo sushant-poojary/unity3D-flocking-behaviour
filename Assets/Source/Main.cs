@@ -63,7 +63,7 @@ public class Main : MonoBehaviour
             //if (mSpaceTree.Insert(boid, out container))
             //{
             //    boid.ContainerNode = container;
-            //    //Debug.LogError("--------------------------[START]container: " + container.ID);
+            //    //Debug.LogError("--------------------------[START]container: " + container.NAME);
             //}
             yield return new WaitForEndOfFrame();
         }
@@ -81,7 +81,7 @@ public class Main : MonoBehaviour
         }
         allRegions = mSpaceTree.GetAllRegions();
         mTreeChildren.TrimExcess();
-        //mStartMovement = true;
+        mStartMovement = true;
     }
 
     //private void GetSeperation()
@@ -177,13 +177,13 @@ public class Main : MonoBehaviour
             if (mSpaceTree.Update(boid, boid.ContainerNode, out container))
             {
                 boid.ContainerNode = container;
-                //Debug.Log("GOT IT!!!      [Update] container: " + container.ID);
+                //Debug.Log("GOT IT!!!      [Update] container: " + container.NAME);
             }
             else
             {
                 //Debug.LogError("Failed to update " + boid + " from node:" + boid.ContainerNode);
             }
-
+            mSpaceTree.Prune();
             allRegions = mSpaceTree.GetAllRegions();
         }
     }
