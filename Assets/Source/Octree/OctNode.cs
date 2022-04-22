@@ -206,7 +206,7 @@ public partial class OctTree<T> where T : ITreeChild
         {
             bool s = mChildren.Remove(child);
             IsEmpty = (mChildren.Count < 1);
-            //Debug.Log($"Removing child from:{NAME}. Success?{s}. Mcontainer count:({mContainer.Count})");
+            //Debug.Log($"Removing child from:{NAME}. Success?{s}. Mcontainer count:({mChildren.Count})");
             return s;
         }
 
@@ -409,10 +409,10 @@ public partial class OctTree<T> where T : ITreeChild
                 Debug.LogWarning($"success!:{success}. but container is NULL!!, this:{this.GUID}");
             }
 #endif
-            if (!success)
-            {
-                Debug.LogWarning($"FAILED TO ADD child:{child.ID} to node this:{this.GUID}");
-            }
+            //if (!success)
+            //{
+            //    Debug.LogWarning($"FAILED TO ADD child:{child.ID} to node this:{this.GUID}");
+            //}
             IsEmpty = (mChildren.Count < 1);
             IsActive = !IsEmpty || insertedInLeadNode;
             return success;
@@ -476,8 +476,12 @@ public partial class OctTree<T> where T : ITreeChild
                 OctNode node;
                 if (InsertDynamic(child, smallestNodeSpan, out node))
                 {
-                    //Debug.Log($"Adding Node:{node}, {i}");
+                    //Debug.Log($"Adding Child:{child.ID}.... To Node:{node.GUID}, {i}");
                     nodes.Add(node);
+                }
+                else
+                {
+                    Debug.LogWarning($"Failed to add Child:{child.ID}.... To Node:{node}, {i}");
                 }
             }
             mNodesUpdated = true;

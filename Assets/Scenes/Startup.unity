@@ -178,7 +178,7 @@ MonoBehaviour:
     MAX_SPEED: 6
     FollowTargetWeight: 1
     Target: {fileID: 2044800112}
-  NumberOfBirds: 50
+  NumberOfBirds: 1000
   mFov: 0.2
   minDistance: 4
   awarenessRadius: 6

@@ -69,28 +69,35 @@ public class Main : MonoBehaviour
         }
         List<OctTree<Boid>.OctNode> containers;
         mSpaceTree.BuildTree(mTreeChildren, out containers);
-        foreach (var item in containers)
+        foreach (OctTree<Boid>.OctNode item in containers)
         {
-            foreach (var boid in mTreeChildren)
-            {
-                if (item.Contains(boid))
-                {
-                    boid.ContainerNode = item;
-                    break;
-                }
-            }
+            AssignContainerNode(item);
         }
-        foreach (var boid in mTreeChildren)
-        {
-            if (boid.ContainerNode == null)
-            {
-                Debug.Log("Boids have no containers:"+boid.ID);
-            }
-        }
+        //foreach (var boid in mTreeChildren)
+        //{
+        //    if (boid.ContainerNode == null)
+        //    {
+        //        Debug.Log("Boids have no containers:" + boid.ID);
+        //    }
+        //}
 
         allRegions = mSpaceTree.GetAllRegions();
         mTreeChildren.TrimExcess();
-        //mStartMovement = true;
+        mStartMovement = true;
+    }
+
+    private void AssignContainerNode(OctTree<Boid>.OctNode item)
+    {
+        //Debug.Log("------------------------------------Checking for Node:" + item.GUID);
+        foreach (var boid in mTreeChildren)
+        {
+            //Debug.Log("Checking Boid:" + boid.ID);
+            if (item.Contains(boid))
+            {
+                boid.ContainerNode = item;
+            }
+        }
+        //Debug.LogWarning("Boid not found in node :" + item.GUID);
     }
 
     //private void GetSeperation()

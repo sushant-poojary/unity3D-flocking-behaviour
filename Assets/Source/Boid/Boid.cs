@@ -43,8 +43,8 @@ public class Boid : ITreeChild
         Vector3 direction = mConfig.Target.position - Position;
         Vector3 force = direction.normalized;
         force *= mConfig.FollowTargetWeight;
-        force.x = 0.5f;
-        force.z = 0.5f;
+        force.x = 0.0f;
+        force.z = 0.0f;
         //force.y = 0;
         //force *= 4;
         var vel = force + (alignmentSteering + seperation + cohension);
