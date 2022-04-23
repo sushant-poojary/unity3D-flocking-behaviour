@@ -32,7 +32,7 @@ public class Main : MonoBehaviour
     void Start()
     {
 
-        mSpaceTree = new OctTree<Boid>(transform.position, 64, 2);
+        mSpaceTree = new OctTree<Boid>(transform.position, 64, 4);
         mBoidCount = NumberOfBirds;
         StartCoroutine(GenerateBirds(mBoidCount));
 
@@ -49,24 +49,15 @@ public class Main : MonoBehaviour
             GameObject bird = GameObject.Instantiate<GameObject>(BirdPrefab);
             Boid boid = new Boid(bird, i.ToString(), mBoidConfig);
             mTreeChildren.Add(boid);
-
+            //if (i == 0) mBoidConfig.Target = bird.transform;
             //var x = Random.Range(-1, 2);//Random.Range(mSpaceBounds.min.x + 2f, mSpaceBounds.max.x - 2f);
             //var y = Random.Range(-1, 2);//Random.Range(mSpaceBounds.min.y + 2f, mSpaceBounds.max.y - 2f);
             //var z = Random.Range(-1, 2);//Random.Range(mSpaceBounds.min.z + 2f, mSpaceBounds.max.z - 2f);
 
             var x = Random.Range(mSpaceBounds.min.x + BOUNDARY_BUFFER, mSpaceBounds.max.x - BOUNDARY_BUFFER);
-
             var z = Random.Range(mSpaceBounds.min.z + BOUNDARY_BUFFER, mSpaceBounds.max.z - BOUNDARY_BUFFER);
-
             Vector3 randomPosition = new Vector3(x, y, z);
             bird.transform.position = randomPosition;
-            //Physics.SyncTransforms();
-            //OctTree<Boid>.OctNode container;
-            //if (mSpaceTree.Insert(boid, out container))
-            //{
-            //    boid.ContainerNode = container;
-            //    //Debug.LogError("--------------------------[START]container: " + container.NAME);
-            //}
             yield return new WaitForEndOfFrame();
         }
         List<OctTree<Boid>.OctNode> containers;
@@ -75,14 +66,6 @@ public class Main : MonoBehaviour
         {
             AssignContainerNode(item);
         }
-        //foreach (var boid in mTreeChildren)
-        //{
-        //    if (boid.ContainerNode == null)
-        //    {
-        //        Debug.Log("Boids have no containers:" + boid.ID);
-        //    }
-        //}
-
         allRegions = mSpaceTree.GetAllRegions();
         mTreeChildren.TrimExcess();
         mStartMovement = true;
@@ -90,58 +73,22 @@ public class Main : MonoBehaviour
 
     private void AssignContainerNode(OctTree<Boid>.OctNode item)
     {
-        //Debug.Log("------------------------------------Checking for Node:" + item.GUID);
         foreach (var boid in mTreeChildren)
         {
-            //Debug.Log("Checking Boid:" + boid.ID);
             if (item.Contains(boid))
             {
                 boid.ContainerNode = item;
             }
         }
-        //Debug.LogWarning("Boid not found in node :" + item.GUID);
     }
-
-    //private void GetSeperation()
-    //{
-    //    var desiredSeparation = getBoidViewDistance() / 2;
-
-    //    var desired = new Victor(0, 0);
-
-    //    // For every flockmate, check if it's too close
-    //    for (var i = 0, l = boids.length; i < l; ++i)
-    //    {
-    //        var other = boids[i];
-    //        var dist = this.position.distance(other.position);
-    //        if (dist < desiredSeparation && dist > 0)
-    //        {
-    //            // Calculate vector pointing away from the flockmate, weighted by distance
-    //            var diff = this.position.clone().subtract(other.position).normalize().divideScalar(dist);
-    //            desired.add(diff);
-    //        }
-    //    }
-
-    //    // If the boid had flockmates to separate from
-    //    if (desired.length() > 0)
-    //    {
-    //        // We set the average vector to the length of our desired speed
-    //        desired.normalize().multiplyScalar(getDesiredSpeed());
-
-    //        // We then calculate the steering force needed to get to that desired velocity
-    //        return this.steer(desired);
-    //    }
-
-    //    return desired;
-    //}
-
     // Update is called once per frame
     void Update()
     {
         if (!mStartMovement) return;
         for (int i = 0; i < mBoidCount; i++)
         {
-            Boid boid = (Boid)mTreeChildren[i];
-            neighs = mSpaceTree.FindNeighboringChildren(boid, boid.ContainerNode, 2);
+            Boid boid = mTreeChildren[i];
+            neighs = mSpaceTree.FindNeighboringChildren(boid, boid.ContainerNode, 3);
             //neighs = mSpaceTree.DebugFindNeighboringChildren(boid, boid.ContainerNode, 2, out topNode);
 
             CalculateMovement(boid, ref neighs);
@@ -189,36 +136,30 @@ public class Main : MonoBehaviour
                 currentPos.z = mSpaceBounds.min.z + BOUNDARY_BUFFER;
                 boid.ChangePosition(currentPos);
             }
-
-            if (Time.frameCount % interval == 0)
+            OctTree<Boid>.OctNode container;
+            //Debug.Log("Boid to bounds " + boid.GetBounds());
+            if (mSpaceTree.Update(boid, boid.ContainerNode, out container))
             {
-                OctTree<Boid>.OctNode container;
-                //Debug.Log("Boid to bounds " + boid.GetBounds());
-                if (mSpaceTree.Update(boid, boid.ContainerNode, out container))
+                if (container == null)
                 {
-                    if (container == null)
-                    {
-                        Debug.LogWarning("Container is null for boid at prev:" + boid.ContainerNode.GUID);
-                    }
-                    boid.ContainerNode = container;
-                    //Debug.Log("GOT IT!!!      [Update] container: " + container.NAME);
+                    Debug.LogWarning("Container is null for boid at prev:" + boid.ContainerNode.GUID);
                 }
-                else
-                {
-                    //Debug.LogError("Failed to update " + boid + " from node:" + boid.ContainerNode);
-                }
-               
-                //allRegions = mSpaceTree.GetAllRegions();
+                boid.ContainerNode = container;
+                //Debug.Log("GOT IT!!!      [Update] container: " + container.NAME);
             }
-            if (Time.frameCount % doubleInterval == 0)
+            else
             {
-                mSpaceTree.Prune();
+                //Debug.LogError("Failed to update " + boid + " from node:" + boid.ContainerNode);
             }
-            //allRegions = mSpaceTree.GetAllRegions();
+        }//end for loop
+        if (Time.frameCount % doubleInterval == 0)
+        {
+            mSpaceTree.Prune();
         }
+        //allRegions = mSpaceTree.GetAllRegions();
     }
 
-    private void CalculateMovement(Boid boid, ref List<Boid> neighs)
+    private void CalculateMovement(Boid boid, ref List<Boid> neighbhours)
     {
         int cohensionCount = 0;
         int seperationCount = 0;
@@ -226,31 +167,34 @@ public class Main : MonoBehaviour
         Vector3 alignment = Vector3.zero;
         Vector3 seperation = Vector3.zero;
         Vector3 cohension = Vector3.zero;
-        int length = neighs.Count;
+        int length = neighbhours.Count;
         Vector3 boidPosition = boid.Position;
         Vector3 foward = boid.GetForwardVector();
         for (int neighCount = 0; neighCount < length; neighCount++)
         {
-            Boid neighbhor = neighs[neighCount];
+            Boid neighbhor = neighbhours[neighCount];
             Vector3 position = neighbhor.Position;
             if (neighbhor != boid)
             {
-                var difference = position - boidPosition;
-                var dist = difference.sqrMagnitude;
-                if (dist < awarenessRadius * awarenessRadius)
+                Vector3 difference = position - boidPosition;
+                float distSqaured = difference.sqrMagnitude;
+                if (distSqaured < awarenessRadius * awarenessRadius)
                 {
-                    if (dist < minDistance * minDistance)
+                    if (distSqaured < minDistance * minDistance)
                     {
+                        //SEPERATION
                         seperation -= difference;
                         seperationCount++;
                     }
                     //Debug.Log($"dist:{dist}, angle:{angle}");
 
+                    //COHENSION
                     cohension += position;
                     cohensionCount++;
                     float angle = Vector3.Dot(foward, difference.normalized);
                     if (angle >= mFov)
                     {
+                        //ALIGNMENT
                         alignment += ((Boid)neighbhor).GetCurrentVelocity();
                         alignmentCount++;
                     }
@@ -261,60 +205,18 @@ public class Main : MonoBehaviour
         if (alignment != Vector3.zero)
         {
             alignment /= (float)alignmentCount;
+            alignment.Normalize();
         }
         if (cohension != Vector3.zero)
         {
             cohension /= (float)cohensionCount;
+            cohension -= boid.Position;
+            cohension.Normalize();
         }
         if (seperation != Vector3.zero)
         {
             seperation /= (float)seperationCount;
-            //seperation *= -1;
-        }
-        //Debug.Log($"alignment:{alignment}, cohension:{cohension}, seperation:{seperation} neighs.Count:{neighs.Count}");
-
-
-        if (alignment != Vector3.zero)
-        {
-            //alignment -= mVelocity;
-            alignment.Normalize();
-            //alignmentSteering *= mConfig.MAX_SPEED;
-            //alignmentSteering = alignmentSteering - mVelocity;
-
-            //if (alignmentSteering.sqrMagnitude > mConfig.MAX_SPEED * mConfig.MAX_SPEED)
-            //{
-
-            //    alignmentSteering.Normalize();
-            //    alignmentSteering *= mConfig.MAX_SPEED;
-            //}
-        }
-
-        if (seperation != Vector3.zero)
-        {
             seperation.Normalize();
-            //seperation *= mConfig.MAX_SPEED;
-            //seperation -= mVelocity;
-            //if (seperation.sqrMagnitude > mConfig.MAX_SPEED * mConfig.MAX_SPEED)
-            //{
-
-            //    seperation.Normalize();
-            //    seperation *= mConfig.MAX_SPEED;
-            //}
-        }
-
-        if (cohension != Vector3.zero)
-        {
-            cohension -= boid.Position;
-            cohension.Normalize();
-            //cohension *= mConfig.MAX_SPEED;
-            //cohension = cohension - mVelocity;
-
-            //if (cohension.sqrMagnitude > mConfig.MAX_SPEED * mConfig.MAX_SPEED)
-            //{
-
-            //    cohension.Normalize();
-            //    cohension *= mConfig.MAX_SPEED;
-            //}
         }
 
         seperation *= mBoidConfig.SeparationWeight;  //Separation from each other
@@ -322,7 +224,14 @@ public class Main : MonoBehaviour
         cohension *= mBoidConfig.CohesionWeight;    //for grouping
 
 
-        boid.Move(alignment, seperation, cohension);
+        Vector3 direction = mBoidConfig.Target.position - boidPosition;
+        Vector3 targetDirection = direction.normalized;
+        targetDirection *= mBoidConfig.FollowTargetWeight;
+        targetDirection.x = 3.0f;
+        //targetDirection.z = 0.0f;
+
+        Vector3 force = targetDirection + (seperation + alignment + cohension);
+        boid.Move(force);
     }
 
     private void OnGUI()

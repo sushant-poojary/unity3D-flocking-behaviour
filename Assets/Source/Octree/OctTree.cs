@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -10,12 +9,8 @@ public partial class OctTree<T> where T : ITreeChild
 
     public int MinSpaceSpan { get; private set; }
     private readonly OctNode mRoot;
-    private List<Bounds> mFlattenedRegions;
     private List<T> mChildren = new List<T>();
     private List<OctNode> mFlattenedNodes = new List<OctNode>();
-    private Dictionary<OctNode, List<T>> mChildrenByNodes = new Dictionary<OctNode, List<T>>();
-    //private List<OctNode> mFlattenedNonEmptyRegions = new List<OctNode>();
-
 
     public OctTree(Vector3 centre, int span, int smallestSpaceSpan)
     {
@@ -50,22 +45,15 @@ public partial class OctTree<T> where T : ITreeChild
                 mFlattenedNodes.AddRange(children);
                 nodesToScan += children.Length;
             }
-            /*
-            for (int i = 0; i < length; i++)
-            {
-                OctNode leaf = children[i];
-                if (leaf != null && leaf.IsActive)
-                {
-                    flattenedNodes.Add(leaf);
-                    nodesToScan++;
-                }
-            }*/
             count++;
         }
-        //flattenedNodes.TrimExcess();
         return mFlattenedNodes;
     }
 
+    /// <summary>
+    /// for debugging and stuff
+    /// </summary>
+    /// <returns></returns>
     public List<Bounds> GetAllRegions()
     {
         OctNode startingNode = mRoot;
@@ -79,13 +67,6 @@ public partial class OctTree<T> where T : ITreeChild
         {
             OctNode node = flattenedNodes[count];
             flattenedBounds.Add(node.BoundingBox);
-            //List<OctNode> children = ((IOctNode)node).GetLeafNodes();
-            //int length = children.Count;
-            //for (int i = 0; i < length; i++)
-            //{
-            //    flattenedNodes.Add(children[i]);
-            //    nodesToScan++;
-            //}
             OctNode[] children = ((IOctNode)node).GetLeafNodes();
             int length = children.Length;
             //flattenedNodes.AddRange(children);
@@ -98,145 +79,37 @@ public partial class OctTree<T> where T : ITreeChild
                     nodesToScan++;
                 }
             }
-            //foreach (OctNode item in children)
-            //{
-            //    flattenedNodes.Add(item);
-            //    nodesToScan++;
-            //}
             count++;
         }
-        //flattenedNodes.TrimExcess();
         return flattenedBounds;
-    }
-
-    //public List<OctNode> GetNonEmptyRegions()
-    //{
-    //    mFlattenedNonEmptyRegions.Clear();
-    //    foreach (var item in mFlattenedNodes)
-    //    {
-    //        if (!item.IsEmpty)
-    //        {
-    //            mFlattenedNonEmptyRegions.Add(item);
-    //        }
-    //    }
-    //    return mFlattenedNonEmptyRegions;
-    //}
-
-    public void BuildTree()
-    {
-        ((IOctNode)mRoot).BuildLeafNodes(MinSpaceSpan);
-        var flattenedNodes = GetFlattenedNodes(mRoot);
-        mFlattenedRegions = new List<Bounds>(flattenedNodes.Count);
-        foreach (var item in flattenedNodes)
-        {
-            mFlattenedRegions.Add(item.BoundingBox);
-        }
-    }
-
-    private bool AddChildToNode(OctNode node, T child)
-    {
-        if (node is null)
-        {
-            throw new ArgumentNullException(nameof(node));
-        }
-        if (child == null)
-        {
-            throw new ArgumentNullException(nameof(child));
-        }
-        List<T> children;
-        if (!mChildrenByNodes.TryGetValue(node, out children))
-        {
-            children = new List<T>();
-            mChildrenByNodes.Add(node, children);
-        }
-        if (children.Count >= OctTree<T>.MAX_CONTAINER_SIZE) return false;
-        if (!children.Contains(child)) children.Add(child);
-        return true;
-    }
-
-    private bool RemoveChildFromNode(OctNode node, T child)
-    {
-        if (node is null)
-        {
-            throw new ArgumentNullException(nameof(node));
-        }
-        if (child == null)
-        {
-            throw new ArgumentNullException(nameof(child));
-        }
-        List<T> children;
-        if (mChildrenByNodes.TryGetValue(node, out children))
-        {
-            return children.Remove(child);
-        }
-        return false;
-    }
-
-    private bool NodeContains(OctNode node, T child)
-    {
-        if (node is null)
-        {
-            throw new ArgumentNullException(nameof(node));
-        }
-        if (child == null)
-        {
-            throw new ArgumentNullException(nameof(child));
-        }
-        List<T> children;
-        if (mChildrenByNodes.TryGetValue(node, out children))
-        {
-            return children.Contains(child);
-        }
-        return false;
     }
 
     public void BuildTree(List<T> treeChildren, out List<OctNode> nodes)
     {
-        //int length = treeChildren.Count;
-        //nodes = new List<OctNode>(length);
-        //for (int i = 0; i < length; i++)
-        //{
-        //    T child = treeChildren[i];
-        //    OctNode node;
-        //    if (((IOctNode)mRoot).InsertDynamic(child, MinSpaceSpan, out node))
-        //    {
-        //        //Debug.Log($"Adding Child:{child.ID}.... To Node:{node.GUID}, {i}");
-        //        nodes.Add(node);
-        //        AddChildToNode(node, child);
-        //    }
-        //    else
-        //    {
-        //        Debug.LogWarning($"Failed to add Child:{child.ID}.... To Node:{node}, {i}");
-        //    }
-        //}
-
-        ((IOctNode)mRoot).BuildLeafNodes(treeChildren, MinSpaceSpan, mRoot.BoundingBox.size, out nodes);
+        ((IOctNode)mRoot).BuildLeafNodes(treeChildren, MinSpaceSpan, out nodes);
     }
 
     public bool Insert(T gameObject, out OctNode node)
     {
-        return ((IOctNode)mRoot).Insert(gameObject, out node);
+        return ((IOctNode)mRoot).Insert(gameObject, MinSpaceSpan, out node);
     }
 
     public bool Update(T child, OctNode currentNode, out OctNode newNode)
     {
         newNode = null;
-        if (currentNode == null) throw new ArgumentNullException(nameof(currentNode));
-        if (child == null) throw new ArgumentNullException(nameof(child));
+        //if (currentNode == null) throw new ArgumentNullException(nameof(currentNode));
+        //if (child == null) throw new ArgumentNullException(nameof(child));
         if (!currentNode.Contains(child))
-            throw new System.Exception($"child:{child} does not exist in current Node:{currentNode.GUID}");
+            throw new System.Exception($"child:{child} does not exist in current Node:{currentNode}");
 
         //if (!NodeContains(currentNode, child))
         //    throw new System.Exception($"child:{child} does not exist in current Node:{currentNode.GUID}");
 
-        OctNode nodeToInsertIn;
-        //OctTree<T>.OctNode parentToPrune = currentNode.Parent;
-        //Vector3 dimension = GetRootArea().size;
-        nodeToInsertIn = currentNode.Parent;
-        if (nodeToInsertIn == null) nodeToInsertIn = mRoot;
+        IOctNode nodeToInsertIn;
+        nodeToInsertIn = currentNode.Parent == null ? mRoot : currentNode.Parent;
         while (nodeToInsertIn != null)
         {
-            if (((IOctNode)nodeToInsertIn).InsertDynamic(child, MinSpaceSpan, out newNode))
+            if (nodeToInsertIn.Insert(child, MinSpaceSpan, out newNode))
             {
                 if (newNode != currentNode)
                 {
@@ -247,7 +120,7 @@ public partial class OctTree<T> where T : ITreeChild
             }
             else
             {
-                nodeToInsertIn = nodeToInsertIn.Parent;
+                nodeToInsertIn = nodeToInsertIn.Parent; //root parent would be null
             }
         }
         return false;

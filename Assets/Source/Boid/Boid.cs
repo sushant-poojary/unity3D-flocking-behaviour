@@ -66,6 +66,21 @@ public class Boid : ITreeChild
 
     }
 
+    public void Move(Vector3 force)
+    {
+        mVelocity += force;
+        if (mVelocity.sqrMagnitude > mConfig.MAX_SPEED * mConfig.MAX_SPEED)
+        {
+            mVelocity = mVelocity.normalized * mConfig.MAX_SPEED;
+        }
+        //mVelocity.Normalize();
+        mTransform.position += (mVelocity * Time.deltaTime);
+        Vector3 facing = Vector3.RotateTowards(mTransform.forward, mVelocity, 5f * Time.deltaTime, 0.0f);
+        //Quaternion prevRotation = mTransform.rotation;
+        Debug.DrawRay(mTransform.position, facing, Color.red);
+        mTransform.rotation = Quaternion.LookRotation(facing);
+    }
+
     public override string ToString()
     {
         return base.ToString();
